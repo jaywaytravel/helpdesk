@@ -110,6 +110,13 @@ function mainRoutes (router, middleware, controllers) {
     controllers.tickets.processor
   )
   router.get(
+    '/tickets/inactive',
+    middleware.redirectToLogin,
+    middleware.loadCommonData,
+    controllers.tickets.getClosed,
+    controllers.tickets.processor
+  )
+  router.get(
     '/tickets/active/page/:page',
     middleware.redirectToLogin,
     middleware.loadCommonData,
@@ -162,7 +169,7 @@ function mainRoutes (router, middleware, controllers) {
     '/tickets/closed',
     middleware.redirectToLogin,
     middleware.loadCommonData,
-    controllers.tickets.getByStatus,
+    controllers.tickets.getClosed,
     controllers.tickets.processor
   )
   router.get(

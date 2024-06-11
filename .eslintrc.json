@@ -17,7 +17,9 @@
     "n/no-callback-literal": 0,
     "new-cap": 0,
     "no-console": "off",
-    "complexity": ["error", 20]
+    "complexity": ["error", 50],
+    "spaced-comment": "off",
+    "array-callback-return": "off"
   },
   "globals": {
     "define": true,

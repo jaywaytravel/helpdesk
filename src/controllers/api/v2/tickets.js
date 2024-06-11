@@ -60,6 +60,8 @@ ticketsV2.get = async (req, res) => {
 
     const statuses = await ticketStatusSchema.find({ isResolved: false })
 
+    const closedStatuses = await ticketStatusSchema.find({ isResolved: true })
+
     switch (type.toLowerCase()) {
       case 'active':
         queryObject.status = statuses.map(i => i._id.toString())
@@ -82,8 +84,9 @@ ticketsV2.get = async (req, res) => {
         queryObject.status = [2]
         break
       case 'closed':
-        queryObject.status = [3]
+        queryObject.status = closedStatuses.map(i => i._id.toString())
         break
+
       case 'filter':
         try {
           queryObject.filter = JSON.parse(query.filter)

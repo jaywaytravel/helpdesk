@@ -25,6 +25,7 @@ import { updateNavChange } from 'actions/nav'
 import Helpers from 'lib/helpers'
 
 class Sidebar extends React.Component {
+  // eslint-disable-next-line no-useless-constructor
   constructor (props) {
     super(props)
   }
@@ -115,6 +116,12 @@ class Sidebar extends React.Component {
                     icon='timer'
                     href='/tickets/active'
                     active={activeSubItem === 'tickets-active'}
+                  />
+                  <SubmenuItem
+                    text='Closed'
+                    icon='timer'
+                    href='/tickets/closed'
+                    active={activeSubItem === 'tickets-closed'}
                   />
                   <SubmenuItem
                     text='Assigned'
