@@ -43,6 +43,7 @@ class EasyMDE extends React.Component {
       forceSync: true,
       minHeight: this.props.height,
       toolbar: EasyMDE.getMdeToolbarItems(),
+      uploadImage: true,
       autoDownloadFontAwesome: false,
       status: false,
       spellChecker: false
@@ -57,39 +58,50 @@ class EasyMDE extends React.Component {
 
       const $el = $(this.element)
       const self = this
+
+      console.log('self ===========', self)
+
       if (!$el.hasClass('hasInlineUpload')) {
         $el.addClass('hasInlineUpload')
-        window.inlineAttachment.editors.codemirror4.attach(this.easymde.codemirror, {
-          onFileUploadResponse: function (xhr) {
-            const result = JSON.parse(xhr.responseText)
+        window.inlineAttachment.editors.codemirror4.attach(
+          this.easymde.codemirror,
 
-            const filename = result[this.settings.jsonFieldName]
+          {
+            onFileUploadResponse: function (xhr) {
+              const result = JSON.parse(xhr.responseText)
 
-            if (result && filename) {
-              let newValue
-              if (typeof this.settings.urlText === 'function') {
-                newValue = this.settings.urlText.call(this, filename, result)
-              } else {
-                newValue = this.settings.urlText.replace(this.filenameTag, filename)
+              const filename = result[this.settings.jsonFieldName]
+
+              console.log('this ===', this)
+
+              if (result && filename) {
+                let newValue
+                if (typeof this.settings.urlText === 'function') {
+                  newValue = this.settings.urlText.call(this, filename, result)
+                } else {
+                  newValue = this.settings.urlText.replace(this.filenameTag, filename)
+                }
+
+                const text = this.editor.getValue().replace(this.lastValue, newValue)
+                this.editor.setValue(text)
+                this.settings.onFileUploaded.call(this, filename)
               }
-
-              const text = this.editor.getValue().replace(this.lastValue, newValue)
+              return false
+            },
+            onFileUploadError: function (xhr) {
+              const result = xhr.responseText
+              const text = this.editor.getValue() + ' ' + result
               this.editor.setValue(text)
-              this.settings.onFileUploaded.call(this, filename)
-            }
-            return false
-          },
-          onFileUploadError: function (xhr) {
-            const result = xhr.responseText
-            const text = this.editor.getValue() + ' ' + result
-            this.editor.setValue(text)
-          },
-          extraHeaders: self.props.inlineImageUploadHeaders,
-          errorText: 'Error uploading file: ',
-          uploadUrl: self.props.inlineImageUploadUrl,
-          jsonFieldName: 'filename',
-          urlText: '![Image]({filename})'
-        })
+            },
+            extraHeaders: self.props.inlineImageUploadHeaders,
+            errorText: 'Error uploading file: ',
+            uploadUrl: self.props.inlineImageUploadUrl,
+            jsonFieldName: 'filename',
+            urlText: '![Image]({filename})'
+          }
+        )
+
+        console.log('rerererer')
 
         EasyMDE.attachFileDesc(self.element)
       }
@@ -125,10 +137,7 @@ class EasyMDE extends React.Component {
       .addClass('attachFileDesc')
       .html('<p>Attach images by dragging & dropping or pasting from clipboard.</p>')
     $el.siblings('.CodeMirror').addClass('hasFileDesc')
-    $el
-      .siblings('.editor-statusbar')
-      .addClass('hasFileDesc')
-      .prepend(attachFileDiv)
+    $el.siblings('.editor-statusbar').addClass('hasFileDesc').prepend(attachFileDiv)
   }
 
   onTextareaChanged (value) {
@@ -207,6 +216,13 @@ class EasyMDE extends React.Component {
         action: Easymde.togglePreview,
         className: 'material-icons mi-preview no-disable no-mobile no-ajaxy',
         title: 'Toggle Preview'
+      },
+      '|',
+      {
+        name: 'upload-image',
+        action: Easymde.drawUploadedImage,
+        className: 'material-icons mi-upload no-ajaxy',
+        title: 'Upload file'
       }
     ]
   }

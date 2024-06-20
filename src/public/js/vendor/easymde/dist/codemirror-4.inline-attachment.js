@@ -9,9 +9,12 @@
     'use strict'
 
     var codeMirrorEditor = function (instance) {
+        console.log('getWrapperElement check ===== ', instance)
         if (!instance.getWrapperElement) {
             throw 'Invalid CodeMirror object given'
         }
+
+        console.log('codeMirrorEditor instance ===== ', instance)
 
         this.codeMirror = instance
     }
@@ -60,6 +63,7 @@
     }
 
     var codeMirrorEditor4 = function (instance) {
+        console.log('codeMirrorEditor4 instance ===== ', instance)
         codeMirrorEditor.call(this, instance)
     }
 

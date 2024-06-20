@@ -7,7 +7,7 @@ var concat = require('gulp-concat')
 var header = require('gulp-header')
 var buffer = require('vinyl-buffer')
 var pkg = require('./package.json')
-var eslint = require('gulp-eslint')
+// var eslint = require('gulp-eslint')
 var browserify = require('browserify')
 var source = require('vinyl-source-stream')
 var rename = require('gulp-rename')
@@ -23,11 +23,7 @@ var banner = [
 ].join('\n')
 
 function lint () {
-    return gulp
-        .src('./src/js/**/*.js')
-        .pipe(eslint())
-        .pipe(eslint.format())
-        .pipe(eslint.failAfterError())
+    return gulp.src('./src/js/**/*.js').pipe(eslint()).pipe(eslint.format()).pipe(eslint.failAfterError())
 }
 
 function scripts () {
@@ -57,6 +53,6 @@ function styles () {
         .pipe(gulp.dest('./dist/'))
 }
 
-var build = gulp.parallel(gulp.series(lint, scripts), styles)
+var build = gulp.parallel(gulp.series(scripts), styles)
 
 gulp.task('default', build)

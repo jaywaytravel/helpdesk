@@ -13,6 +13,9 @@ require('codemirror/mode/xml/xml.js')
 var CodeMirrorSpellChecker = require('codemirror-spell-checker')
 var marked = require('marked')
 
+// require('../../dist/codemirror-4.inline-attachment')
+// require('../../dist/inline-attachment')
+
 // Some variables
 var isMac = /Mac/.test(navigator.platform)
 var anchorToExternalRegex = new RegExp(/(<a.*?https?:\/\/.*?[^a]>)+?/g)
@@ -25,6 +28,7 @@ var bindings = {
     toggleHeadingSmaller: toggleHeadingSmaller,
     toggleHeadingBigger: toggleHeadingBigger,
     drawImage: drawImage,
+    drawUploadedImage: drawUploadedImage,
     toggleBlockquote: toggleBlockquote,
     toggleOrderedList: toggleOrderedList,
     toggleUnorderedList: toggleUnorderedList,
@@ -51,6 +55,7 @@ var shortcuts = {
     toggleHeadingBigger: 'Shift-Cmd-H',
     cleanBlock: 'Cmd-E',
     drawImage: 'Cmd-Alt-I',
+    drawUploadedImage: 'Cmd-Alt-U',
     toggleBlockquote: "Cmd-'",
     toggleOrderedList: 'Cmd-Alt-L',
     toggleUnorderedList: 'Cmd-L',
@@ -173,6 +178,30 @@ function createTooltip (title, action, shortcuts) {
 }
 
 /**
+ * Create the input element (ie. <input type='file'>) used to open the
+ * browse-file window in order to allow the user to select an image to be
+ * imported to the server. Used among with the 'import-image' icon.
+ * @param editor {Object} the EasyMDE object
+ * @returns Node The created input DOM element.
+ */
+function createImageInput (editor) {
+    var imageInput = document.createElement('input')
+    imageInput.className = 'imageInput'
+    imageInput.type = 'file'
+    imageInput.multiple = true
+    imageInput.name = 'image'
+    imageInput.accept = editor.options.imageAccept
+    imageInput.style.display = 'none'
+    imageInput.style.opacity = 0
+    imageInput.addEventListener('change', function (event) {
+        for (var i = 0; i < event.target.files.length; i++) {
+            console.log('file name: ' + event.target.files[i].name)
+        }
+    })
+    return imageInput
+}
+
+/**
  * The state of CodeMirror at the given position.
  */
 function getState (cm, pos) {
@@ -291,10 +320,12 @@ function toggleCodeBlock (editor) {
     function fencing_line (line) {
         /* return true, if this is a ``` or ~~~ line */
         if (typeof line !== 'object') {
-            throw "fencing_line() takes a 'line' object (not a line number, or line text).  Got: " +
+            throw (
+                "fencing_line() takes a 'line' object (not a line number, or line text).  Got: " +
                 typeof line +
                 ': ' +
                 line
+            )
         }
         return line.styles && line.styles[2] && line.styles[2].indexOf('formatting-code-block') !== -1
     }
@@ -703,6 +734,10 @@ function drawImage (editor) {
     var stat = getState(cm)
     var options = editor.options
     var url = 'https://'
+
+    console.log('editor === ', editor)
+    console.log('options === ', options)
+
     if (options.promptURLs) {
         url = prompt(options.promptTexts.image)
         if (!url) {
@@ -710,6 +745,13 @@ function drawImage (editor) {
         }
     }
     _replaceSelection(cm, stat.image, options.insertTexts.image, url)
+}
+
+/**
+ * Action for uploading an img.
+ */
+function drawUploadedImage (editor) {
+    editor.openBrowseFileWindow()
 }
 
 /**
@@ -1150,7 +1192,8 @@ function extend (target) {
 
 /* The right word count in respect for CJK. */
 function wordCount (data) {
-    var pattern = /[a-zA-Z0-9_\u0392-\u03c9\u0410-\u04F9]+|[\u4E00-\u9FFF\u3400-\u4dbf\uf900-\ufaff\u3040-\u309f\uac00-\ud7af]+/g
+    var pattern =
+        /[a-zA-Z0-9_\u0392-\u03c9\u0410-\u04F9]+|[\u4E00-\u9FFF\u3400-\u4dbf\uf900-\ufaff\u3040-\u309f\uac00-\ud7af]+/g
     var m = data.match(pattern)
     var count = 0
     if (m === null) return count
@@ -1271,6 +1314,13 @@ var toolbarBuiltInButtons = {
     image: {
         name: 'image',
         action: drawImage,
+        className: 'fa fa-image',
+        title: 'Insert Image',
+        default: true
+    },
+    'upload-image': {
+        name: 'image',
+        action: drawUploadedImage,
         className: 'fa fa-image',
         title: 'Insert Image',
         default: true
@@ -1750,6 +1800,236 @@ EasyMDE.prototype.clearAutosavedValue = function () {
     }
 }
 
+// function drawImage (editor) {
+//     console.log('drawImage --- ')
+//     var cm = editor.codemirror
+//     var stat = getState(cm)
+//     var options = editor.options
+//     var url = 'https://'
+//     if (options.promptURLs) {
+//         url = prompt(options.promptTexts.image)
+//         if (!url) {
+//             return false
+//         }
+//     }
+//     _replaceSelection(cm, stat.image, options.insertTexts.image, url)
+// }
+/**
+ * Open the browse-file window to upload an image to a server.
+ * @param [onSuccess] {function} see EasyMDE.prototype.uploadImage
+ * @param [onError] {function} see EasyMDE.prototype.uploadImage
+ */
+EasyMDE.prototype.openBrowseFileWindow = function (onSuccess, onError) {
+    //self eto easymde
+    var self = this
+    var imageInput = this.gui.toolbar.getElementsByClassName('imageInput')[0]
+
+    console.log('self === ', self)
+    console.log('imageInput === ', imageInput)
+    console.log('toolbar === ', this.gui.toolbar)
+
+    imageInput.click()
+    function onChange (event) {
+        window.inlineAttachment.editors.codemirror4.attach(this.codemirror, {
+            onFileUploadResponse: function (xhr) {
+                var result = JSON.parse(xhr.responseText)
+
+                var filename = result[this.settings.jsonFieldName]
+
+                console.log('this ===', this)
+
+                console.log('result ===', result)
+                console.log('filename ===', filename)
+
+                if (result && filename) {
+                    var newValue
+                    if (typeof this.settings.urlText === 'function') {
+                        newValue = this.settings.urlText.call(this, filename, result)
+                    } else {
+                        newValue = this.settings.urlText.replace(this.filenameTag, filename)
+                    }
+
+                    console.log('newValue ===', newValue)
+
+                    var text = this.editor.getValue().replace(this.lastValue, newValue)
+                    this.editor.setValue(text)
+                    this.settings.onFileUploaded.call(this, filename)
+                }
+                return false
+            },
+            onFileUploadError: function (xhr) {
+                var result = xhr.responseText
+                var text = this.editor.getValue() + ' ' + result
+                this.editor.setValue(text)
+            },
+            // extraHeaders: self.props.inlineImageUploadHeaders,
+            extraHeaders: { ticketid: '1011' },
+            errorText: 'Error uploading file: ',
+            // uploadUrl: self.props.inlineImageUploadUrl,
+            uploadUrl: '/tickets/uploadmdeimage',
+            jsonFieldName: 'filename',
+            urlText: '![Image]({filename})'
+        })
+
+        imageInput.removeEventListener('change', onChange)
+    }
+
+    imageInput.addEventListener('change', onChange)
+}
+
+/**
+ * Upload an image to the server.
+ *
+ * @param file {File} The image to upload, as a HTML5 File object (https://developer.mozilla.org/en-US/docs/Web/API/File)
+ * @param [onSuccess] {function} A callback function to execute after the image has been successfully uploaded, with one parameter:
+ * - url (string): The URL of the uploaded image.
+ * @param [onError] {function} A callback function to execute when the image upload fails, with one parameter:
+ * - error (string): the detailed error to display to the user (based on messages from options.errorMessages).
+ */
+EasyMDE.prototype.uploadImage = function (file, onSuccess, onError) {
+    var self = this
+    onSuccess =
+        onSuccess ||
+        function onSuccess (imageUrl) {
+            afterImageUploaded(self, imageUrl)
+        }
+
+    function onErrorSup (errorMessage) {
+        // show error on status bar and reset after 10000ms
+        self.updateStatusBar('upload-image', errorMessage)
+
+        setTimeout(function () {
+            self.updateStatusBar('upload-image', self.options.imageTexts.sbInit)
+        }, 10000)
+
+        // run custom error handler
+        if (onError && typeof onError === 'function') {
+            onError(errorMessage)
+        }
+        // run error handler from options, this alerts the message.
+        self.options.errorCallback(errorMessage)
+    }
+
+    function fillErrorMessage (errorMessage) {
+        var units = self.options.imageTexts.sizeUnits.split(',')
+        return errorMessage
+            .replace('#image_name#', file.name)
+            .replace('#image_size#', humanFileSize(file.size, units))
+            .replace('#image_max_size#', humanFileSize(self.options.imageMaxSize, units))
+    }
+
+    if (file.size > this.options.imageMaxSize) {
+        onErrorSup(fillErrorMessage(this.options.errorMessages.fileTooLarge))
+        return
+    }
+
+    var formData = new FormData()
+    formData.append('image', file)
+
+    // insert CSRF body token if provided in config.
+    if (self.options.imageCSRFToken && !self.options.imageCSRFHeader) {
+        formData.append(self.options.imageCSRFName, self.options.imageCSRFToken)
+    }
+
+    var request = new XMLHttpRequest()
+    request.upload.onprogress = function (event) {
+        if (event.lengthComputable) {
+            var progress = '' + Math.round((event.loaded * 100) / event.total)
+            self.updateStatusBar(
+                'upload-image',
+                self.options.imageTexts.sbProgress.replace('#file_name#', file.name).replace('#progress#', progress)
+            )
+        }
+    }
+    request.open('POST', this.options.imageUploadEndpoint)
+
+    // insert CSRF header token if provided in config.
+    if (self.options.imageCSRFToken && self.options.imageCSRFHeader) {
+        request.setRequestHeader(self.options.imageCSRFName, self.options.imageCSRFToken)
+    }
+
+    request.onload = function () {
+        try {
+            var response = JSON.parse(this.responseText)
+        } catch (error) {
+            console.error('EasyMDE: The server did not return a valid json.')
+            onErrorSup(fillErrorMessage(self.options.errorMessages.importError))
+            return
+        }
+        if (this.status === 200 && response && !response.error && response.data && response.data.filePath) {
+            onSuccess((self.options.imagePathAbsolute ? '' : window.location.origin + '/') + response.data.filePath)
+        } else {
+            if (response.error && response.error in self.options.errorMessages) {
+                // preformatted error message
+                onErrorSup(fillErrorMessage(self.options.errorMessages[response.error]))
+            } else if (response.error) {
+                // server side generated error message
+                onErrorSup(fillErrorMessage(response.error))
+            } else {
+                //unknown error
+                console.error(
+                    'EasyMDE: Received an unexpected response after uploading the image.' +
+                        this.status +
+                        ' (' +
+                        this.statusText +
+                        ')'
+                )
+                onErrorSup(fillErrorMessage(self.options.errorMessages.importError))
+            }
+        }
+    }
+
+    request.onerror = function (event) {
+        console.error(
+            'EasyMDE: An unexpected error occurred when trying to upload the image.' +
+                event.target.status +
+                ' (' +
+                event.target.statusText +
+                ')'
+        )
+        onErrorSup(self.options.errorMessages.importError)
+    }
+
+    request.send(formData)
+}
+
+/**
+ * Upload an image to the server using a custom upload function.
+ *
+ * @param imageUploadFunction {Function} The custom function to upload the image passed in options
+ * @param file {File} The image to upload, as a HTML5 File object (https://developer.mozilla.org/en-US/docs/Web/API/File).
+ */
+EasyMDE.prototype.uploadImageUsingCustomFunction = function (imageUploadFunction, file) {
+    var self = this
+
+    function onSuccess (imageUrl) {
+        afterImageUploaded(self, imageUrl)
+    }
+
+    function onError (errorMessage) {
+        var filledErrorMessage = fillErrorMessage(errorMessage)
+        // show error on status bar and reset after 10000ms
+        self.updateStatusBar('upload-image', filledErrorMessage)
+
+        setTimeout(function () {
+            self.updateStatusBar('upload-image', self.options.imageTexts.sbInit)
+        }, 10000)
+
+        // run error handler from options, this alerts the message.
+        self.options.errorCallback(filledErrorMessage)
+    }
+
+    function fillErrorMessage (errorMessage) {
+        var units = self.options.imageTexts.sizeUnits.split(',')
+        return errorMessage
+            .replace('#image_name#', file.name)
+            .replace('#image_size#', humanFileSize(file.size, units))
+            .replace('#image_max_size#', humanFileSize(self.options.imageMaxSize, units))
+    }
+
+    imageUploadFunction.apply(this, [file, onSuccess, onError])
+}
+
 EasyMDE.prototype.createSideBySide = function () {
     var cm = this.codemirror
     var wrapper = cm.getWrapperElement()
@@ -1864,6 +2144,10 @@ EasyMDE.prototype.createToolbar = function (items) {
 
             toolbarData[item.name || item] = el
             bar.appendChild(el)
+
+            if (item.name === 'upload-image') {
+                bar.appendChild(createImageInput(self))
+            }
         })(items[i])
     }
 
@@ -2033,6 +2317,7 @@ EasyMDE.toggleOrderedList = toggleOrderedList
 EasyMDE.cleanBlock = cleanBlock
 EasyMDE.drawLink = drawLink
 EasyMDE.drawImage = drawImage
+EasyMDE.drawUploadedImage = drawUploadedImage
 EasyMDE.drawTable = drawTable
 EasyMDE.drawHorizontalRule = drawHorizontalRule
 EasyMDE.undo = undo
@@ -2088,6 +2373,10 @@ EasyMDE.prototype.drawLink = function () {
 }
 EasyMDE.prototype.drawImage = function () {
     drawImage(this)
+}
+
+EasyMDE.prototype.drawUploadedImage = function () {
+    drawUploadedImage(this)
 }
 EasyMDE.prototype.drawTable = function () {
     drawTable(this)

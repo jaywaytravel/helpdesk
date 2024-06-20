@@ -127,10 +127,22 @@ const sendMail = async (ticket, emails, baseUrl, betaEnabled) => {
 
   const template = await Template.findOne({ name: 'new-ticket' })
   if (template) {
-    const ticketJSON = ticket.toJSON()
-    const context = { base_url: baseUrl, ticket: ticketJSON }
+    console.log('ticket  == ', ticket)
+
+    function addBaseUrlToImgSrc (ticketJSON, baseUrl) {
+      const imgTagRegex = /(<img\s+[^>]*src=["'])(\/[^"']*["'][^>]*>)/gi
+      const updatedTicketJSON = JSON.parse(JSON.stringify(ticketJSON))
+      updatedTicketJSON.issue = updatedTicketJSON.issue.replace(imgTagRegex, `$1${baseUrl}$2`)
+
+      return updatedTicketJSON
+    }
+
+    const updatedTicketJSON = addBaseUrlToImgSrc(ticket, baseUrl)
+
+    const context = { base_url: baseUrl, ticket: updatedTicketJSON }
 
     const html = await email.render('new-ticket', context)
+
     const subjectParsed = global.Handlebars.compile(template.subject)(context)
     const mailOptions = {
       to: emails.join(),
