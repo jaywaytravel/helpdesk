@@ -37,7 +37,8 @@ const initialState = {
   viewType: 'active',
   loading: false,
   nextPage: 1,
-  prevPage: 0
+  prevPage: 0,
+  forms: List([])
 }
 
 // Util function until custom views are finished

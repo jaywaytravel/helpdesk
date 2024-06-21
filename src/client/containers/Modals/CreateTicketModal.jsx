@@ -62,6 +62,8 @@ class CreateTicketModal extends React.Component {
         this.selectedPriority = head(this.priorities) ? head(this.priorities)._id : ''
       }
     )
+
+    console.log('this.props === ', this.props)
   }
 
   componentDidUpdate () {}
@@ -71,11 +73,14 @@ class CreateTicketModal extends React.Component {
   }
 
   onTicketTypeSelectChange (e) {
+    console.log('e === ', e)
     this.priorityWrapper.classList.add('hide')
     this.priorityLoader.classList.remove('hide')
     axios
       .get(`/api/v1/tickets/type/${e.target.value}`)
       .then(res => {
+        console.log('res.data. === ', res.data)
+
         const type = res.data.type
         if (type && type.priorities) {
           this.priorities = orderBy(type.priorities, ['migrationNum'])
@@ -176,12 +181,19 @@ class CreateTicketModal extends React.Component {
     const mappedTicketTypes = this.props.ticketTypes.toArray().map(type => {
       return { text: type.get('name'), value: type.get('_id') }
     })
+
+    const mappedTicketForm = this.props.ticketFormTypes.toArray().map(type => {
+      return { text: type.get('name'), value: type.get('_id') }
+    })
+
     const mappedTicketTags = this.props.ticketTags.toArray().map(tag => {
       return { text: tag.get('name'), value: tag.get('_id') }
     })
     return (
       <BaseModal {...this.props} options={{ bgclose: false }}>
         <form className={'uk-form-stacked'} onSubmit={e => this.onFormSubmit(e)}>
+          {console.log(JSON.stringify(this.props.ticketFormTypes))}
+
           <div className='uk-margin-medium-bottom'>
             <label>Subject</label>
             <input
@@ -323,6 +335,7 @@ CreateTicketModal.propTypes = {
   viewdata: PropTypes.object.isRequired,
   ticketTypes: PropTypes.object.isRequired,
   priorities: PropTypes.object.isRequired,
+  ticketFormTypes: PropTypes.object.isRequired,
   ticketTags: PropTypes.object.isRequired,
   accounts: PropTypes.object.isRequired,
   groups: PropTypes.object.isRequired,
@@ -338,6 +351,7 @@ const mapStateToProps = state => ({
   socket: state.shared.socket,
   viewdata: state.common.viewdata,
   ticketTypes: state.ticketsState.types,
+  ticketFormTypes: state.ticketsState.forms,
   priorities: state.ticketsState.priorities,
   ticketTags: state.tagsSettings.tags,
   groups: state.groupsState.groups,

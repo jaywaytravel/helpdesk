@@ -24,9 +24,9 @@ const RateLimiterMemory = require('rate-limiter-flexible').RateLimiterMemory
 
 const limiterSlowBruteByIP = new RateLimiterMemory({
   keyPrefix: 'login_fail_ip_per_day',
-  points: 15,
-  duration: 60 * 60 * 24,
-  blockDuration: 60 * 60
+  points: 115,
+  duration: 60,
+  blockDuration: 60
 })
 
 const mainController = {}
@@ -110,7 +110,7 @@ mainController.loginPost = async function (req, res, next) {
   let ipAddress = req.ip
   if (process.env.USE_XFORWARDIP == 'true') ipAddress = req.headers['x-forwarded-for']
 
-  if (process.env.USE_USERRATELIMIT == 'true') ipAddress = ipAddress + req.body['username']
+  if (process.env.USE_USERRATELIMIT == 'true') ipAddress = ipAddress + req.body.username
 
   const [resEmailAndIP] = await Promise.all([limiterSlowBruteByIP.get(ipAddress)])
 
@@ -260,7 +260,7 @@ mainController.forgotL2Auth = function (req, res) {
           const mailOptions = {
             to: savedUser.email,
             subject: '[Trudesk] Account Recovery',
-            html: html,
+            html,
             generateTextFromHTML: true
           }
 
@@ -362,7 +362,7 @@ mainController.forgotPass = function (req, res) {
                 }
               })
 
-              return next(null, { betaEnabled: true, template: template })
+              return next(null, { betaEnabled: true, template })
             })
           },
           function (obj, next) {
@@ -395,8 +395,8 @@ mainController.forgotPass = function (req, res) {
             .then(function (html) {
               const mailOptions = {
                 to: savedUser.email,
-                subject: subject,
-                html: html,
+                subject,
+                html,
                 generateTextFromHTML: true
               }
 
@@ -469,7 +469,7 @@ mainController.resetl2auth = function (req, res) {
             const mailOptions = {
               to: updated.email,
               subject: '[Trudesk] Two-Factor Authentication Removed!',
-              html: html,
+              html,
               generateTextFromHTML: true
             }
 
@@ -555,7 +555,7 @@ mainController.resetPass = function (req, res) {
             const mailOptions = {
               to: updated.email,
               subject: '[Trudesk] New Password',
-              html: html,
+              html,
               generateTextFromHTML: true
             }
 
