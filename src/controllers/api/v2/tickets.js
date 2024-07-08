@@ -167,6 +167,17 @@ ticketsV2.update = function (req, res) {
   })
 }
 
+ticketsV2.getTemplates = async (req, res) => {
+  // const ticketTemplate = require('../../../models/ticketTemplate')
+  const templates = await Models.Template.find({})
+
+  templates.getTemplates(function (err, types) {
+    if (err) return res.status(400).json({ success: false, error: 'Invalid Post Data' })
+
+    return res.json(types)
+  })
+}
+
 ticketsV2.batchUpdate = function (req, res) {
   const batch = req.body.batch
   if (!_.isArray(batch)) return apiUtils.sendApiError_InvalidPostData(res)
@@ -255,6 +266,22 @@ ticketsV2.transferToThirdParty = async (req, res) => {
 }
 
 ticketsV2.info = {}
+
+ticketsV2.info.templates = async (req, res) => {
+  try {
+    console.log(' Models: ', Models)
+
+    const ticketTemplates = await Models.TicketTemplate.find({})
+
+    console.log('ticketTemplates:', ticketTemplates)
+
+    return apiUtils.sendApiSuccess(res, { ticketTemplates })
+  } catch (err) {
+    logger.warn(err)
+    return apiUtils.sendApiError(res, 500, err.message)
+  }
+}
+
 ticketsV2.info.types = async (req, res) => {
   try {
     const ticketTypes = await Models.TicketType.find({})

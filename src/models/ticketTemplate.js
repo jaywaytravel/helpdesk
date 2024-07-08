@@ -16,7 +16,7 @@ const _ = require('lodash')
 const mongoose = require('mongoose')
 const utils = require('../helpers/utils')
 
-const COLLECTION = 'tickettypes'
+const COLLECTION = 'tickettemplates'
 
 // Needed for Population
 require('./ticketpriority')
@@ -30,20 +30,12 @@ require('./ticketpriority')
  * @property {object} _id ```Required``` ```unique``` MongoDB Object ID
  * @property {String} name ```Required``` ```unique``` Name of Ticket Type
  */
-const ticketTypeSchema = mongoose.Schema({
+const ticketType2Schema = mongoose.Schema({
   name: { type: String, required: true, unique: true },
-  priorities: [{ type: mongoose.Schema.Types.ObjectId, ref: 'priorities' }]
+  text: { type: String }
 })
 
-const autoPopulatePriorities = function (next) {
-  this.populate('priorities')
-  return next()
-}
-
-ticketTypeSchema.pre('find', autoPopulatePriorities)
-ticketTypeSchema.pre('findOne', autoPopulatePriorities)
-
-ticketTypeSchema.pre('save', function (next) {
+ticketType2Schema.pre('save', function (next) {
   this.name = utils.sanitizeFieldPlainText(this.name.trim())
 
   return next()
@@ -58,7 +50,7 @@ ticketTypeSchema.pre('save', function (next) {
  *
  * @param {QueryCallback} callback MongoDB Query Callback
  */
-ticketTypeSchema.statics.getTypes = function (callback) {
+ticketType2Schema.statics.getTypes = function (callback) {
   const q = this.model(COLLECTION).find({})
 
   return q.exec(callback)
@@ -74,7 +66,7 @@ ticketTypeSchema.statics.getTypes = function (callback) {
  * @param {String} id Object Id of ticket type
  * @param {QueryCallback} callback MongoDB Query Callback
  */
-ticketTypeSchema.statics.getType = function (id, callback) {
+ticketType2Schema.statics.getType = function (id, callback) {
   const q = this.model(COLLECTION).findOne({ _id: id })
 
   return q.exec(callback)
@@ -90,13 +82,13 @@ ticketTypeSchema.statics.getType = function (id, callback) {
  * @param {String} name Name of Ticket Type to search for
  * @param {QueryCallback} callback MongoDB Query Callback
  */
-ticketTypeSchema.statics.getTypeByName = function (name, callback) {
+ticketType2Schema.statics.getTypeByName = function (name, callback) {
   const q = this.model(COLLECTION).findOne({ name })
 
   return q.exec(callback)
 }
 
-ticketTypeSchema.methods.addPriority = function (priorityId, callback) {
+ticketType2Schema.methods.addPriority = function (priorityId, callback) {
   if (!priorityId) return callback({ message: 'Invalid Priority Id' })
 
   const self = this
@@ -110,7 +102,7 @@ ticketTypeSchema.methods.addPriority = function (priorityId, callback) {
   return callback(null, self)
 }
 
-ticketTypeSchema.methods.removePriority = function (priorityId, callback) {
+ticketType2Schema.methods.removePriority = function (priorityId, callback) {
   if (!priorityId) return callback({ message: 'Invalid Priority Id' })
 
   const self = this
@@ -122,4 +114,4 @@ ticketTypeSchema.methods.removePriority = function (priorityId, callback) {
   return callback(null, self)
 }
 
-module.exports = mongoose.model(COLLECTION, ticketTypeSchema)
+module.exports = mongoose.model(COLLECTION, ticketType2Schema)

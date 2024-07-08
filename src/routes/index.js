@@ -87,6 +87,13 @@ function mainRoutes (router, middleware, controllers) {
     controllers.main.dashboard
   )
 
+  // router.get(
+  //   '/tickets/templates',
+  //   middleware.redirectToLogin,
+  //   middleware.loadCommonData,
+  //   controllers.tickets.getTemplates
+  // )
+
   // Tickets
   router.get(
     '/tickets',

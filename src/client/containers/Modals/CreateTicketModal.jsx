@@ -41,11 +41,17 @@ class CreateTicketModal extends React.Component {
   @observable allAccounts = this.props.accounts || []
   @observable groupAccounts = []
   @observable selectedPriority = ''
-  issueText = ''
 
   constructor (props) {
     super(props)
     makeObservable(this)
+
+    this.state = {
+      ticketTemplates: [],
+      ticketDefaultTemplate: {},
+      issueText: ''
+    }
+    // this.handleInputChange = this.handleInputChange.bind(this)
   }
 
   componentDidMount () {
@@ -63,7 +69,31 @@ class CreateTicketModal extends React.Component {
       }
     )
 
-    console.log('this.props === ', this.props)
+    axios
+      .get(`/api/v2/tickets/info/templates/`)
+      .then(res => {
+        const templates = res.data.ticketTemplates
+
+        console.log(
+          'did mount issueText = ',
+          templates.find(item => item.name === this.props.viewdata.get('defaultTicketType').get('name')).text
+        )
+
+        console.log('did mount templrates = ', templates)
+
+        this.setState({
+          ticketTemplates: templates,
+          ticketDefaultTemplate: templates.find(
+            item => item.name === this.props.viewdata.get('defaultTicketType').get('name')
+          ),
+          issueText: templates.find(item => item.name === this.props.viewdata.get('defaultTicketType').get('name')).text
+        })
+      })
+      .catch(error => {
+        this.priorityLoader.classList.add('hide')
+        Log.error(error)
+        helpers.UI.showSnackbar(`Error: ${error.response.data.error}`)
+      })
   }
 
   componentDidUpdate () {}
@@ -87,6 +117,14 @@ class CreateTicketModal extends React.Component {
           this.selectedPriority = head(orderBy(type.priorities, ['migrationNum']))
             ? head(orderBy(type.priorities, ['migrationNum']))._id
             : ''
+
+          console.log('this.ticketTemplates === ', this.ticketTemplates)
+          console.log('ttttype === ', type)
+
+          this.setState({
+            ticketDefaultTemplate: this.state.ticketTemplates.find(item => item.name === type.name),
+            issueText: this.state.ticketTemplates.find(item => item.name === type.name).text
+          })
 
           setTimeout(() => {
             this.priorityLoader.classList.add('hide')
@@ -141,6 +179,7 @@ class CreateTicketModal extends React.Component {
     data.subject = e.target.subject.value
     data.group = this.groupSelect.value
     data.type = this.typeSelect.value
+    data.template = this.state.ticketDefaultTemplate._id
     data.tags = this.tagSelect.value
     data.priority = this.selectedPriority
     data.issue = this.issueMde.easymde.value()
@@ -159,6 +198,15 @@ class CreateTicketModal extends React.Component {
     //   })
     //   .toArray()
   }
+
+  // handleInputChange (event) {
+  //   const value = event?.target
+
+  //   if (value) {
+  //     console.log('value in onchangeee --- ', value)
+  //     this.setState({ issueText: value })
+  //   }
+  // }
 
   render () {
     const { shared, viewdata } = this.props
@@ -182,17 +230,16 @@ class CreateTicketModal extends React.Component {
       return { text: type.get('name'), value: type.get('_id') }
     })
 
-    const mappedTicketForm = this.props.ticketFormTypes.toArray().map(type => {
-      return { text: type.get('name'), value: type.get('_id') }
-    })
-
     const mappedTicketTags = this.props.ticketTags.toArray().map(tag => {
       return { text: tag.get('name'), value: tag.get('_id') }
     })
+
     return (
       <BaseModal {...this.props} options={{ bgclose: false }}>
         <form className={'uk-form-stacked'} onSubmit={e => this.onFormSubmit(e)}>
           {console.log(JSON.stringify(this.props.ticketFormTypes))}
+
+          {console.log('state = ', this.state)}
 
           <div className='uk-margin-medium-bottom'>
             <label>Subject</label>
@@ -307,10 +354,13 @@ class CreateTicketModal extends React.Component {
             <div className='error-border-wrap uk-clearfix'>
               <EasyMDE
                 ref={i => (this.issueMde = i)}
+                // onChange={val => this.handleInputChange(val)}
                 onChange={val => (this.issueText = val)}
                 allowImageUpload={true}
                 inlineImageUploadUrl={'/tickets/uploadmdeimage'}
                 inlineImageUploadHeaders={{ ticketid: 'uploads' }}
+                // value={this.issueText}
+                defaultValue={this.state.issueText}
               />
             </div>
             <span style={{ marginTop: '6px', display: 'inline-block', fontSize: '11px' }} className={'uk-text-muted'}>
@@ -343,7 +393,8 @@ CreateTicketModal.propTypes = {
   fetchTicketTypes: PropTypes.func.isRequired,
   getTagsWithPage: PropTypes.func.isRequired,
   fetchGroups: PropTypes.func.isRequired,
-  fetchAccountsCreateTicket: PropTypes.func.isRequired
+  fetchAccountsCreateTicket: PropTypes.func.isRequired,
+  ticketDefaultTemplate: PropTypes.any
 }
 
 const mapStateToProps = state => ({

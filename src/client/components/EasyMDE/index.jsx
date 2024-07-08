@@ -59,8 +59,6 @@ class EasyMDE extends React.Component {
       const $el = $(this.element)
       const self = this
 
-      console.log('self ===========', self)
-
       if (!$el.hasClass('hasInlineUpload')) {
         $el.addClass('hasInlineUpload')
         window.inlineAttachment.editors.codemirror4.attach(
@@ -71,8 +69,6 @@ class EasyMDE extends React.Component {
               const result = JSON.parse(xhr.responseText)
 
               const filename = result[this.settings.jsonFieldName]
-
-              console.log('this ===', this)
 
               if (result && filename) {
                 let newValue
@@ -101,16 +97,27 @@ class EasyMDE extends React.Component {
           }
         )
 
-        console.log('rerererer')
-
         EasyMDE.attachFileDesc(self.element)
       }
     }
   }
 
-  componentDidUpdate () {
+  onTextareaChanged (value) {
+    this.setState({
+      value
+    })
+
+    if (this.props.onChange) this.props.onChange(value)
+  }
+
+  componentDidUpdate (prevProps, state) {
     if (this.easymde && this.easymde.value() !== this.state.value) {
       this.easymde.value(this.state.value)
+    }
+
+    if (prevProps.defaultValue !== this.props.defaultValue) {
+      console.log('Child component re-rendered due to prop change:', this.props.defaultValue)
+      return this.onTextareaChanged(this.props.defaultValue)
     }
   }
 
@@ -138,14 +145,6 @@ class EasyMDE extends React.Component {
       .html('<p>Attach images by dragging & dropping or pasting from clipboard.</p>')
     $el.siblings('.CodeMirror').addClass('hasFileDesc')
     $el.siblings('.editor-statusbar').addClass('hasFileDesc').prepend(attachFileDiv)
-  }
-
-  onTextareaChanged (value) {
-    this.setState({
-      value
-    })
-
-    if (this.props.onChange) this.props.onChange(value)
   }
 
   getEditorText () {

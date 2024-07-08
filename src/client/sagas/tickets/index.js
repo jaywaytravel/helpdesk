@@ -36,15 +36,18 @@ import {
   TICKET_EVENT,
   TRANSFER_TO_THIRDPARTY,
   FETCH_TICKET_TYPES,
-  FETCH_STATUS
+  FETCH_TICKET_TEMPLATES,
+  FETCH_STATUS,
+  CREATE_STATUS,
+  DELETE_STATUS,
+  UPDATE_STATUS
 } from 'actions/types'
 
 import helpers from 'lib/helpers'
-import { CREATE_STATUS, DELETE_STATUS, UPDATE_STATUS } from '../../actions/types'
 
 const getSessionUser = state => state.shared.sessionUser
 
-function * fetchTickets ({ payload }) {
+function* fetchTickets ({ payload }) {
   yield put({ type: FETCH_TICKETS.PENDING, payload })
   try {
     let response = null
@@ -60,7 +63,7 @@ function * fetchTickets ({ payload }) {
   }
 }
 
-function * createTicket ({ payload }) {
+function* createTicket ({ payload }) {
   try {
     const response = yield call(api.tickets.create, payload)
     const sessionUser = yield select(getSessionUser)
@@ -74,7 +77,7 @@ function * createTicket ({ payload }) {
   }
 }
 
-function * deleteTicket ({ payload }) {
+function* deleteTicket ({ payload }) {
   try {
     const response = yield call(api.tickets.delete, payload)
     yield put({ type: DELETE_TICKET.SUCCESS, payload, response })
@@ -86,7 +89,7 @@ function * deleteTicket ({ payload }) {
   }
 }
 
-function * unloadThunk ({ payload, meta }) {
+function* unloadThunk ({ payload, meta }) {
   try {
     yield put({ type: UNLOAD_TICKETS.SUCCESS, payload, meta })
   } catch (error) {
@@ -94,7 +97,7 @@ function * unloadThunk ({ payload, meta }) {
   }
 }
 
-function * ticketUpdated ({ payload }) {
+function* ticketUpdated ({ payload }) {
   try {
     const sessionUser = yield select(getSessionUser)
     yield put({ type: TICKET_UPDATED.SUCCESS, payload, sessionUser })
@@ -103,7 +106,7 @@ function * ticketUpdated ({ payload }) {
   }
 }
 
-function * ticketEvent ({ payload }) {
+function* ticketEvent ({ payload }) {
   try {
     const sessionUser = yield select(getSessionUser)
     yield put({ type: TICKET_EVENT.SUCCESS, payload, sessionUser })
@@ -112,7 +115,7 @@ function * ticketEvent ({ payload }) {
   }
 }
 
-function * createTicketType ({ payload }) {
+function* createTicketType ({ payload }) {
   try {
     const response = yield call(api.tickets.createTicketType, payload)
     yield put({ type: CREATE_TICKET_TYPE.SUCCESS, response })
@@ -126,7 +129,7 @@ function * createTicketType ({ payload }) {
   }
 }
 
-function * deleteTicketType ({ payload }) {
+function* deleteTicketType ({ payload }) {
   try {
     const response = yield call(api.tickets.deleteTicketType, payload)
     yield put({ type: DELETE_TICKET_TYPE.SUCCESS, response })
@@ -140,7 +143,7 @@ function * deleteTicketType ({ payload }) {
   }
 }
 
-function * getTagsWithPage ({ payload }) {
+function* getTagsWithPage ({ payload }) {
   try {
     const response = yield call(api.tickets.getTagsWithPage, payload)
     yield put({ type: GET_TAGS_WITH_PAGE.SUCCESS, response })
@@ -152,7 +155,7 @@ function * getTagsWithPage ({ payload }) {
   }
 }
 
-function * fetchPriorities ({ payload, meta }) {
+function* fetchPriorities ({ payload, meta }) {
   try {
     const response = yield call(api.tickets.fetchPriorities, payload)
     yield put({ type: FETCH_PRIORITIES.SUCCESS, response, meta })
@@ -167,7 +170,7 @@ function * fetchPriorities ({ payload, meta }) {
   }
 }
 
-function * createPriority ({ payload }) {
+function* createPriority ({ payload }) {
   try {
     const response = yield call(api.tickets.createPriority, payload)
     yield put({ type: CREATE_PRIORITY.SUCCESS, response })
@@ -181,7 +184,7 @@ function * createPriority ({ payload }) {
   }
 }
 
-function * updatePriority ({ payload }) {
+function* updatePriority ({ payload }) {
   try {
     const response = yield call(api.tickets.updatePriority, payload)
     yield put({ type: UPDATE_PRIORITY.SUCCESS, response })
@@ -193,7 +196,7 @@ function * updatePriority ({ payload }) {
   }
 }
 
-function * createStatus ({ payload }) {
+function* createStatus ({ payload }) {
   try {
     const response = yield call(api.tickets.createStatus, payload)
     yield put({ type: CREATE_STATUS.SUCCESS, response })
@@ -207,7 +210,7 @@ function * createStatus ({ payload }) {
   }
 }
 
-function * updateStatus ({ payload }) {
+function* updateStatus ({ payload }) {
   try {
     const response = yield call(api.tickets.updateStatus, payload)
     yield put({ type: UPDATE_STATUS.SUCCESS, response })
@@ -219,7 +222,7 @@ function * updateStatus ({ payload }) {
   }
 }
 
-function * deletePriority ({ payload }) {
+function* deletePriority ({ payload }) {
   try {
     const response = yield call(api.tickets.deletePriority, payload)
     yield put({ type: DELETE_PRIORITY.SUCCESS, response })
@@ -233,7 +236,7 @@ function * deletePriority ({ payload }) {
   }
 }
 
-function * deleteStatus ({ payload }) {
+function* deleteStatus ({ payload }) {
   try {
     const response = yield call(api.tickets.deleteStatus, payload)
     yield put({ type: DELETE_STATUS.SUCCESS, response })
@@ -247,7 +250,7 @@ function * deleteStatus ({ payload }) {
   }
 }
 
-function * createTag ({ payload }) {
+function* createTag ({ payload }) {
   try {
     const response = yield call(api.tickets.createTag, { name: payload.name })
     yield put({ type: CREATE_TAG.SUCCESS, response })
@@ -264,7 +267,7 @@ function * createTag ({ payload }) {
   }
 }
 
-function * transferToThirdParty ({ payload }) {
+function* transferToThirdParty ({ payload }) {
   try {
     const response = yield call(api.tickets.transferToThirdParty, payload)
     yield put({ type: TRANSFER_TO_THIRDPARTY.SUCCESS, response })
@@ -280,7 +283,7 @@ function * transferToThirdParty ({ payload }) {
   }
 }
 
-function * fetchTicketTypes ({ payload }) {
+function* fetchTicketTypes ({ payload }) {
   yield put({ type: FETCH_TICKET_TYPES.PENDING })
   try {
     const response = yield call(api.tickets.fetchTicketTypes, payload)
@@ -296,9 +299,28 @@ function * fetchTicketTypes ({ payload }) {
   }
 }
 
-function * fetchTicketStatus ({ payload }) {
+function* fetchTicketTemplates ({ payload }) {
+  yield put({ type: FETCH_TICKET_TEMPLATES.PENDING })
+  try {
+    console.log('saga temp')
+    const response = yield call(api.tickets.fetchTicketTemplates, payload)
+    yield put({ type: FETCH_TICKET_TEMPLATES.SUCCESS, response })
+  } catch (error) {
+    console.log('err === ', error)
+    const errorText = error.response ? error.response.data.error : error
+    if (error.response && error.response.status !== (401 || 403)) {
+      Log.error(errorText, error)
+      helpers.UI.showSnackbar(`Error: ${errorText}`, true)
+    }
+
+    yield put({ type: FETCH_TICKET_TEMPLATES.ERROR, error })
+  }
+}
+
+function* fetchTicketStatus ({ payload }) {
   yield put({ type: FETCH_STATUS.PENDING })
   try {
+    console.log('saga status')
     const response = yield call(api.tickets.getStatus, payload)
     yield put({ type: FETCH_STATUS.SUCCESS, response })
   } catch (error) {
@@ -312,7 +334,7 @@ function * fetchTicketStatus ({ payload }) {
   }
 }
 
-export default function * watcher () {
+export default function* watcher () {
   yield takeLatest(FETCH_TICKETS.ACTION, fetchTickets)
   yield takeLatest(CREATE_TICKET.ACTION, createTicket)
   yield takeEvery(DELETE_TICKET.ACTION, deleteTicket)
@@ -332,5 +354,7 @@ export default function * watcher () {
   yield takeLatest(CREATE_TAG.ACTION, createTag)
   yield takeLatest(TRANSFER_TO_THIRDPARTY.ACTION, transferToThirdParty)
   yield takeLatest(FETCH_TICKET_TYPES.ACTION, fetchTicketTypes)
+
+  yield takeLatest(FETCH_TICKET_TEMPLATES.ACTION, fetchTicketTemplates)
   yield takeLatest(DELETE_STATUS.ACTION, deleteStatus)
 }

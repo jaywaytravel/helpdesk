@@ -97,11 +97,11 @@ installController.existingdb = function (req, res) {
   const YAML = require('yaml')
   const conf = {
     mongo: {
-      host: host,
-      port: port,
-      username: username,
-      password: password,
-      database: database
+      host,
+      port,
+      username,
+      password,
+      database
     },
     tokens: {
       secret: chance.hash() + chance.md5(),
@@ -127,6 +127,7 @@ installController.install = function (req, res) {
   const GroupSchema = require('../models/group')
   const Counters = require('../models/counters')
   const TicketTypeSchema = require('../models/tickettype')
+  const templateSchema = require('../models/template')
   const TicketStatusSchema = require('../models/ticketStatus')
   const SettingsSchema = require('../models/setting')
 
@@ -473,11 +474,11 @@ installController.install = function (req, res) {
 
         const conf = {
           mongo: {
-            host: host,
-            port: port,
-            username: username,
-            password: password,
-            database: database,
+            host,
+            port,
+            username,
+            password,
+            database,
             shard: port === '---'
           },
           tokens: {

@@ -33,6 +33,8 @@ const statusSchema = require('./ticketStatus')
 require('./tag')
 require('./ticketpriority')
 require('./tickettype')
+require('./ticketTemplate')
+// require('./test')
 
 const COLLECTION = 'tickets'
 
@@ -92,6 +94,11 @@ const ticketSchema = mongoose.Schema({
     required: true,
     ref: 'tickettypes'
   },
+  template: {
+    type: mongoose.Schema.Types.ObjectId,
+    required: true,
+    ref: 'tickettemplates'
+  },
   status: {
     type: mongoose.Schema.Types.ObjectId,
     required: true,
@@ -113,6 +120,7 @@ const ticketSchema = mongoose.Schema({
   notes: [noteSchema],
   attachments: [attachmentSchema],
   history: [historySchema],
+  //TODO ADD TEMPLATES
   subscribers: [{ type: mongoose.Schema.Types.ObjectId, ref: 'accounts' }]
 })
 
@@ -743,13 +751,7 @@ ticketSchema.statics.getForCache = function (callback) {
   return new Promise((resolve, reject) => {
     ;(async () => {
       try {
-        const t365 = moment
-          .utc()
-          .hour(23)
-          .minute(59)
-          .second(50)
-          .subtract(365, 'd')
-          .toDate()
+        const t365 = moment.utc().hour(23).minute(59).second(50).subtract(365, 'd').toDate()
 
         const query = self
           .model(COLLECTION)
@@ -773,11 +775,7 @@ ticketSchema.statics.getForCache = function (callback) {
 
 ticketSchema.statics.getAllNoPopulate = function (callback) {
   const self = this
-  const q = self
-    .model(COLLECTION)
-    .find({ deleted: false })
-    .sort({ status: 1 })
-    .lean()
+  const q = self.model(COLLECTION).find({ deleted: false }).sort({ status: 1 }).lean()
 
   return q.exec(callback)
 }
@@ -1559,11 +1557,7 @@ ticketSchema.statics.getTopTicketGroups = function (timespan, top, callback) {
 
   const self = this
 
-  const today = moment
-    .utc()
-    .hour(23)
-    .minute(59)
-    .second(59)
+  const today = moment.utc().hour(23).minute(59).second(59)
   const tsDate = today.clone().subtract(timespan, 'd')
   let query = {
     date: { $gte: tsDate.toDate(), $lte: today.toDate() },
@@ -1573,12 +1567,7 @@ ticketSchema.statics.getTopTicketGroups = function (timespan, top, callback) {
     query = { deleted: false }
   }
 
-  const q = self
-    .model(COLLECTION)
-    .find(query)
-    .select('group')
-    .populate('group', 'name')
-    .lean()
+  const q = self.model(COLLECTION).find(query).select('group').populate('group', 'name').lean()
 
   let topCount = []
   const ticketsDb = []
@@ -1662,9 +1651,7 @@ ticketSchema.statics.getTypeCount = function (typeId, callback) {
 }
 
 ticketSchema.statics.getCount = function (callback) {
-  const q = this.model(COLLECTION)
-    .countDocuments({ deleted: false })
-    .lean()
+  const q = this.model(COLLECTION).countDocuments({ deleted: false }).lean()
   return q.exec(callback)
 }
 
@@ -1702,12 +1689,7 @@ ticketSchema.statics.restoreDeleted = function (oId, callback) {
 }
 
 ticketSchema.statics.getDeleted = function (callback) {
-  return this.model(COLLECTION)
-    .find({ deleted: true })
-    .populate('group')
-    .sort({ uid: -1 })
-    .limit(1000)
-    .exec(callback)
+  return this.model(COLLECTION).find({ deleted: true }).populate('group').sort({ uid: -1 }).limit(1000).exec(callback)
 }
 
 module.exports = mongoose.model(COLLECTION, ticketSchema)

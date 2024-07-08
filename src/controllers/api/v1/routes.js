@@ -48,6 +48,7 @@ module.exports = function (middleware, router, controllers) {
   router.post('/api/v1/tickets/type/:id/removepriority', apiv1, isAdmin, apiCtrl.tickets.typeRemovePriority)
   router.post('/api/v1/tickets/type/:id/addpriority', apiv1, isAdmin, apiCtrl.tickets.typeAddPriority)
   router.get('/api/v1/tickets/types', apiv1, apiCtrl.tickets.getTypes)
+
   router.post('/api/v1/tickets/types/create', apiv1, isAdmin, apiCtrl.tickets.createType)
   router.put('/api/v1/tickets/types/:id', apiv1, isAdmin, apiCtrl.tickets.updateType)
   router.delete('/api/v1/tickets/types/:id', apiv1, isAdmin, apiCtrl.tickets.deleteType)
@@ -103,7 +104,7 @@ module.exports = function (middleware, router, controllers) {
     tagSchema.countDocuments({}, function (err, count) {
       if (err) return res.status(500).json({ success: false, error: err })
 
-      return res.json({ success: true, count: count })
+      return res.json({ success: true, count })
     })
   })
 

@@ -184,8 +184,8 @@ api.tickets.deletePriority = ({ id, newPriority }) => {
 }
 
 api.tickets.getTagsWithPage = ({ limit, page }) => {
-  limit = limit ? limit : 10
-  page = page ? page : 0
+  limit = limit || 10
+  page = page || 0
   return axios.get(`/api/v1/tags/limit?limit=${limit}&page=${page}`).then(res => {
     return res.data
   })
@@ -205,6 +205,13 @@ api.tickets.transferToThirdParty = ({ uid }) => {
 
 api.tickets.fetchTicketTypes = () => {
   return axios.get('/api/v2/tickets/info/types').then(res => {
+    console.log('bla bla')
+    return res.data
+  })
+}
+
+api.tickets.fetchTicketTemplates = () => {
+  return axios.get('/api/v2/tickets/info/templates/').then(res => {
     return res.data
   })
 }

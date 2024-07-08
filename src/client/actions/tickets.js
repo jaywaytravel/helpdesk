@@ -32,6 +32,7 @@ import {
   TICKET_EVENT,
   TRANSFER_TO_THIRDPARTY,
   FETCH_TICKET_TYPES,
+  FETCH_TICKET_TEMPLATES,
   UPDATE_STATUS,
   CREATE_STATUS,
   FETCH_STATUS,
@@ -86,4 +87,5 @@ export const tagsUpdateCurrentPage = createAction(TAGS_UPDATE_CURRENT_PAGE.ACTIO
 export const createTag = createAction(CREATE_TAG.ACTION, ({ name, currentPage }) => ({ name, currentPage }))
 export const transferToThirdParty = createAction(TRANSFER_TO_THIRDPARTY.ACTION, ({ uid }) => ({ uid }))
 export const fetchTicketTypes = createAction(FETCH_TICKET_TYPES.ACTION)
+export const fetchTicketTemplates = createAction(FETCH_TICKET_TEMPLATES.ACTION)
 export const fetchTicketStatus = createAction(FETCH_STATUS.ACTION)
