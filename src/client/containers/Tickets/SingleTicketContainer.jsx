@@ -501,41 +501,6 @@ class SingleTicketContainer extends React.Component {
                             </div>
                           )}
                         </div>
-
-                        {/* Tags */}
-                        <div className='uk-width-1-1 nopadding'>
-                          <span>
-                            Tags
-                            {hasTicketUpdate && (
-                              <Fragment>
-                                <span> - </span>
-                                <div id='editTags' className={'uk-display-inline'}>
-                                  <a
-                                    role={'button'}
-                                    style={{ fontSize: 11 }}
-                                    className='no-ajaxy'
-                                    onClick={() => {
-                                      this.props.showModal('ADD_TAGS_MODAL', {
-                                        ticketId: this.ticket._id,
-                                        currentTags: this.ticket.tags.map(tag => tag._id)
-                                      })
-                                    }}
-                                  >
-                                    Edit Tags
-                                  </a>
-                                </div>
-                              </Fragment>
-                            )}
-                          </span>
-                          <div className='tag-list uk-clearfix'>
-                            {this.ticket.tags &&
-                              this.ticket.tags.map(tag => (
-                                <div key={tag._id} className='item'>
-                                  {tag.name}
-                                </div>
-                              ))}
-                          </div>
-                        </div>
                       </div>
                     </div>
 

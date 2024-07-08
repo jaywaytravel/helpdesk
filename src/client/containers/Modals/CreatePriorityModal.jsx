@@ -30,6 +30,7 @@ class CreatePriorityModal extends React.Component {
   @observable name = ''
   @observable overdueIn = 2880
   @observable htmlColor = '#29B995'
+  @observable description = ''
 
   constructor (props) {
     super(props)
@@ -50,7 +51,8 @@ class CreatePriorityModal extends React.Component {
     this.props.createPriority({
       name: this.name,
       overdueIn: this.overdueIn,
-      htmlColor: this.htmlColor
+      htmlColor: this.htmlColor,
+      description: this.description
     })
   }
 
@@ -72,6 +74,18 @@ class CreatePriorityModal extends React.Component {
                     className={'md-input'}
                     value={this.name}
                     onChange={e => (this.name = e.target.value)}
+                    data-validation='length'
+                    data-validation-length='min3'
+                    data-validation-error-msg='Invalid name (3+ characters)'
+                  />
+                </div>
+                <div className='uk-width-1-3'>
+                  <label>Description</label>
+                  <input
+                    type='text'
+                    className={'md-input'}
+                    value={this.description}
+                    onChange={e => (this.description = e.target.value)}
                     data-validation='length'
                     data-validation-length='min3'
                     data-validation-error-msg='Invalid name (3+ characters)'

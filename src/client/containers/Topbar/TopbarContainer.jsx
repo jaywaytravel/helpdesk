@@ -173,17 +173,7 @@ class TopbarContainer extends React.Component {
                       </li>
                     )}
                     {/* End Create Ticket Perm */}
-                    <li className='top-bar-icon'>
-                      <PDropdownTrigger target={this.conversationsDropdownPartial}>
-                        <a
-                          title={'Conversations'}
-                          className='no-ajaxy uk-vertical-align'
-                          onClick={e => TopbarContainer.onConversationsClicked(e)}
-                        >
-                          <i className='material-icons'>question_answer</i>
-                        </a>
-                      </PDropdownTrigger>
-                    </li>
+
                     <li className='top-bar-icon'>
                       <PDropdownTrigger target={this.notificationsDropdownPartial}>
                         <a title={'Notifications'} className={'no-ajaxy uk-vertical-align'}>

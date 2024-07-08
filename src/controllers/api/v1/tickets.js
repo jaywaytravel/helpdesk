@@ -1293,6 +1293,8 @@ apiTickets.createPriority = function (req, res) {
 
   const pHtmlColor = data.htmlColor
 
+  const pDescription = data.description
+
   if (!pName) {
     return res.status(400).json({ success: false, error: 'Invalid Request Data.' })
   }
@@ -1302,7 +1304,8 @@ apiTickets.createPriority = function (req, res) {
   const P = new TicketPrioritySchema({
     name: pName,
     overdueIn: pOverdueIn,
-    htmlColor: pHtmlColor
+    htmlColor: pHtmlColor,
+    description: pDescription
   })
 
   P.save(function (err, savedPriority) {

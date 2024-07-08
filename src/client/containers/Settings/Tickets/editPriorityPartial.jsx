@@ -78,15 +78,24 @@ class EditPriorityPartial extends React.Component {
       <div className='edit-priority hide' style={{ paddingTop: '2px' }} ref={i => (this.editPriorityRef = i)}>
         <form onSubmit={e => this.onSubmitEditPriority(e, priority)}>
           <div className='uk-grid uk-grid-collapse uk-clearfix'>
-            <div className='uk-width-1-4'>
+            <div className='uk-width-1-5'>
               <label>Priority Name</label>
               <input name={'name'} type='text' className={'md-input'} defaultValue={priority.get('name')} />
             </div>
-            <div className='uk-width-1-4 uk-padding-small-sides'>
+            <div className='uk-width-1-5'>
+              <label>Priority Description</label>
+              <input
+                name={'description'}
+                type='text'
+                className={'md-input'}
+                defaultValue={priority.get('description')}
+              />
+            </div>
+            <div className='uk-width-1-5 uk-padding-small-sides'>
               <label>SLA Overdue (minutes)</label>
               <input name={'overdueIn'} type='text' className={'md-input'} defaultValue={priority.get('overdueIn')} />
             </div>
-            <div className='uk-width-1-4 uk-padding-small-sides'>
+            <div className='uk-width-1-5 uk-padding-small-sides'>
               <ColorSelector
                 inputName={'htmlColor'}
                 defaultColor={priority.get('htmlColor')}
@@ -112,7 +121,4 @@ EditPriorityPartial.propTypes = {
   fetchSettings: PropTypes.func.isRequired
 }
 
-export default connect(
-  null,
-  { fetchSettings }
-)(EditPriorityPartial)
+export default connect(null, { fetchSettings })(EditPriorityPartial)

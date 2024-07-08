@@ -309,6 +309,7 @@ class CreateTicketModal extends React.Component {
             </div>
             <div ref={i => (this.priorityWrapper = i)} className={'uk-clearfix'}>
               {this.priorities.map(priority => {
+                console.log('priority ------- ', priority.description)
                 return (
                   <div key={priority._id} className={'uk-float-left'}>
                     <span className={'icheck-inline'}>
@@ -328,6 +329,9 @@ class CreateTicketModal extends React.Component {
                         <span className='uk-badge' style={{ backgroundColor: priority.htmlColor }}>
                           {priority.name}
                         </span>
+                      </label>
+                      <label htmlFor={'p___' + priority._id} className={'mb-10 inline-label'}>
+                        <span className='uk-badge'>{priority.description}</span>
                       </label>
                     </span>
                   </div>

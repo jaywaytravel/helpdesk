@@ -116,23 +116,25 @@ api.tickets.fetchPriorities = () => {
     return res.data
   })
 }
-api.tickets.createPriority = ({ name, overdueIn, htmlColor }) => {
+api.tickets.createPriority = ({ name, overdueIn, htmlColor, description }) => {
   return axios
     .post('/api/v1/tickets/priority/create', {
       name,
       overdueIn,
-      htmlColor
+      htmlColor,
+      description
     })
     .then(res => {
       return res.data
     })
 }
-api.tickets.updatePriority = ({ id, name, overdueIn, htmlColor }) => {
+api.tickets.updatePriority = ({ id, name, overdueIn, htmlColor, description }) => {
   return axios
     .put(`/api/v1/tickets/priority/${id}`, {
       name,
       overdueIn,
-      htmlColor
+      htmlColor,
+      description
     })
     .then(res => {
       return res.data

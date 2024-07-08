@@ -58,17 +58,22 @@ export const fetchPriorities = createAction(
   payload => payload,
   () => ({ thunk: true })
 )
-export const createPriority = createAction(CREATE_PRIORITY.ACTION, ({ name, overdueIn, htmlColor }) => ({
+export const createPriority = createAction(CREATE_PRIORITY.ACTION, ({ name, overdueIn, htmlColor, description }) => ({
   name,
   overdueIn,
-  htmlColor
+  htmlColor,
+  description
 }))
-export const updatePriority = createAction(UPDATE_PRIORITY.ACTION, ({ id, name, overdueIn, htmlColor }) => ({
-  id,
-  name,
-  overdueIn,
-  htmlColor
-}))
+export const updatePriority = createAction(
+  UPDATE_PRIORITY.ACTION,
+  ({ id, name, overdueIn, htmlColor, description }) => ({
+    id,
+    name,
+    overdueIn,
+    htmlColor,
+    description
+  })
+)
 
 export const createStatus = createAction(CREATE_STATUS.ACTION, ({ name, htmlColor }) => ({
   name,
