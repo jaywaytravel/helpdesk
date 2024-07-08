@@ -20,7 +20,7 @@ import { makeObservable, observable, when } from 'mobx'
 import { head, orderBy } from 'lodash'
 import axios from 'axios'
 import Log from '../../logger'
-import { createTicket, fetchTicketTypes, getTagsWithPage } from 'actions/tickets'
+import { createTicket, fetchTicketTypes } from 'actions/tickets'
 import { fetchGroups } from 'actions/groups'
 import { fetchAccountsCreateTicket } from 'actions/accounts'
 
@@ -56,7 +56,7 @@ class CreateTicketModal extends React.Component {
 
   componentDidMount () {
     this.props.fetchTicketTypes()
-    this.props.getTagsWithPage({ limit: -1 })
+    // this.props.getTagsWithPage({ limit: -1 })
     this.props.fetchGroups()
     this.props.fetchAccountsCreateTicket({ type: 'all', limit: 1000 })
     helpers.UI.inputs()
@@ -180,7 +180,7 @@ class CreateTicketModal extends React.Component {
     data.group = this.groupSelect.value
     data.type = this.typeSelect.value
     data.template = this.state.ticketDefaultTemplate._id
-    data.tags = this.tagSelect.value
+    // data.tags = this.tagSelect.value
     data.priority = this.selectedPriority
     data.issue = this.issueMde.easymde.value()
     data.socketid = this.props.socket.io.engine.id
@@ -230,9 +230,9 @@ class CreateTicketModal extends React.Component {
       return { text: type.get('name'), value: type.get('_id') }
     })
 
-    const mappedTicketTags = this.props.ticketTags.toArray().map(tag => {
-      return { text: tag.get('name'), value: tag.get('_id') }
-    })
+    // const mappedTicketTags = this.props.ticketTags.toArray().map(tag => {
+    //   return { text: tag.get('name'), value: tag.get('_id') }
+    // })
 
     return (
       <BaseModal {...this.props} options={{ bgclose: false }}>
@@ -282,31 +282,17 @@ class CreateTicketModal extends React.Component {
             </Grid>
           </div>
           <div className='uk-margin-medium-bottom'>
-            <Grid>
-              <GridItem width={'1-3'}>
-                <label className={'uk-form-label'}>Type</label>
-                <SingleSelect
-                  showTextbox={false}
-                  items={mappedTicketTypes}
-                  width={'100%'}
-                  defaultValue={this.props.viewdata.get('defaultTicketType').get('_id')}
-                  onSelectChange={e => {
-                    this.onTicketTypeSelectChange(e)
-                  }}
-                  ref={i => (this.typeSelect = i)}
-                />
-              </GridItem>
-              <GridItem width={'2-3'}>
-                <label className={'uk-form-label'}>Tags</label>
-                <SingleSelect
-                  showTextbox={false}
-                  items={mappedTicketTags}
-                  width={'100%'}
-                  multiple={true}
-                  ref={i => (this.tagSelect = i)}
-                />
-              </GridItem>
-            </Grid>
+            <label className={'uk-form-label'}>Type</label>
+            <SingleSelect
+              showTextbox={false}
+              items={mappedTicketTypes}
+              width={'100%'}
+              defaultValue={this.props.viewdata.get('defaultTicketType').get('_id')}
+              onSelectChange={e => {
+                this.onTicketTypeSelectChange(e)
+              }}
+              ref={i => (this.typeSelect = i)}
+            />
           </div>
           <div className='uk-margin-medium-bottom'>
             <label className={'uk-form-label'}>Priority</label>
@@ -386,12 +372,13 @@ CreateTicketModal.propTypes = {
   ticketTypes: PropTypes.object.isRequired,
   priorities: PropTypes.object.isRequired,
   ticketFormTypes: PropTypes.object.isRequired,
-  ticketTags: PropTypes.object.isRequired,
+  //TAGS probably needs to be deleted at all
+  // ticketTags: PropTypes.object.isRequired,
   accounts: PropTypes.object.isRequired,
   groups: PropTypes.object.isRequired,
   createTicket: PropTypes.func.isRequired,
   fetchTicketTypes: PropTypes.func.isRequired,
-  getTagsWithPage: PropTypes.func.isRequired,
+  // getTagsWithPage: PropTypes.func.isRequired,
   fetchGroups: PropTypes.func.isRequired,
   fetchAccountsCreateTicket: PropTypes.func.isRequired,
   ticketDefaultTemplate: PropTypes.any
@@ -404,7 +391,7 @@ const mapStateToProps = state => ({
   ticketTypes: state.ticketsState.types,
   ticketFormTypes: state.ticketsState.forms,
   priorities: state.ticketsState.priorities,
-  ticketTags: state.tagsSettings.tags,
+  // ticketTags: state.tagsSettings.tags,
   groups: state.groupsState.groups,
   accounts: state.accountsState.accountsCreateTicket
 })
@@ -412,7 +399,7 @@ const mapStateToProps = state => ({
 export default connect(mapStateToProps, {
   createTicket,
   fetchTicketTypes,
-  getTagsWithPage,
+  // getTagsWithPage,
   fetchGroups,
   fetchAccountsCreateTicket
 })(CreateTicketModal)
