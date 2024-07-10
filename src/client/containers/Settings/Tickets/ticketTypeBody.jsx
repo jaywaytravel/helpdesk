@@ -151,7 +151,12 @@ class TicketTypeBody extends React.Component {
                       titleCss={{ color: item.get('htmlColor') }}
                       subtitle={
                         <div>
-                          SLA Overdue: <strong>{item.get('durationFormatted')}</strong>
+                          <div>
+                            Description: <strong>{item.get('description')}</strong>
+                          </div>
+                          <div>
+                            SLA Overdue: <strong>{item.get('durationFormatted')}</strong>
+                          </div>
                         </div>
                       }
                       component={
@@ -208,7 +213,4 @@ TicketTypeBody.propTypes = {
   showModal: PropTypes.func.isRequired
 }
 
-export default connect(
-  null,
-  { updatePriority, fetchSettings, showModal }
-)(TicketTypeBody)
+export default connect(null, { updatePriority, fetchSettings, showModal })(TicketTypeBody)

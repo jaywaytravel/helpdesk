@@ -27,8 +27,7 @@ const prioritySchema = mongoose.Schema(
     htmlColor: { type: String, default: '#29b955' },
 
     migrationNum: { type: Number, index: true }, // Needed to convert <1.0 priorities to new format.
-    description: { type: String },
-    text: { type: String }
+    description: { type: String }
   },
   {
     toJSON: {

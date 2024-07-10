@@ -41,6 +41,7 @@ class EditPriorityPartial extends React.Component {
   }
 
   onSubmitEditPriority (e, priority) {
+    console.log('e.target.description.value    = ', e.target.description.value)
     e.preventDefault()
 
     const $form = $(e.target)
@@ -50,11 +51,12 @@ class EditPriorityPartial extends React.Component {
     const name = e.target.name.value
     const overdueIn = e.target.overdueIn.value
     const htmlColor = e.target.htmlColor.value
+    const description = e.target.description.value
 
     const self = this
 
     api.tickets
-      .updatePriority({ id, name, overdueIn, htmlColor })
+      .updatePriority({ id, name, overdueIn, htmlColor, description })
       .then(res => {
         Log.debug(res)
         self.toggleEditPriority()

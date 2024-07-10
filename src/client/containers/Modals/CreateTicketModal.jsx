@@ -220,11 +220,13 @@ class CreateTicketModal extends React.Component {
       })
       .toArray()
 
-    const mappedGroups = this.props.groups
-      .map(grp => {
-        return { text: grp.get('name'), value: grp.get('_id') }
-      })
-      .toArray()
+    // eslint-disable-next-line prefer-const
+    let mappedGroups = this.props.groups.map(grp => ({ text: grp.get('name'), value: grp.get('_id') })).toArray()
+
+    const defaultGroup = mappedGroups.find(grp => grp.text === 'All')
+    mappedGroups = mappedGroups.filter(grp => (mappedGroups.length > 1 ? grp.text !== 'All' : defaultGroup || grp))
+
+    console.log('mappedGroups then ==== ', mappedGroups)
 
     const mappedTicketTypes = this.props.ticketTypes.toArray().map(type => {
       return { text: type.get('name'), value: type.get('_id') }

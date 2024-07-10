@@ -392,7 +392,12 @@ class TicketsSettings extends React.Component {
                     titleCss={{ color: p.get('htmlColor') }}
                     subtitle={
                       <div>
-                        SLA Overdue: <strong>{p.get('durationFormatted')}</strong>
+                        <div>
+                          Description: <strong>{p.get('description')}</strong>
+                        </div>
+                        <div>
+                          SLA Overdue: <strong>{p.get('durationFormatted')}</strong>
+                        </div>
                       </div>
                     }
                     component={
