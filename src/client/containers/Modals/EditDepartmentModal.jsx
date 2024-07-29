@@ -111,7 +111,7 @@ class EditDepartmentModal extends React.Component {
             <input
               type='text'
               className={'md-input'}
-              value={this.name}
+              defaultValue={this.name}
               onChange={e => this.onInputChange(e)}
               data-validation='length'
               data-validation-length={'min2'}

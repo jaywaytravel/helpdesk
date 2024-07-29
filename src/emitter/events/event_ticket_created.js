@@ -143,7 +143,8 @@ const sendMail = async (ticket, emails, baseUrl, betaEnabled) => {
 
     const html = await email.render('new-ticket', context)
 
-    const subjectParsed = global.Handlebars.compile(template.subject)(context)
+    const subjectParsed = global.Handlebars.compile(template.subject, { noEscape: true })(context)
+
     const mailOptions = {
       to: emails.join(),
       subject: subjectParsed,

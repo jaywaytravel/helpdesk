@@ -41,7 +41,6 @@ class EditPriorityPartial extends React.Component {
   }
 
   onSubmitEditPriority (e, priority) {
-    console.log('e.target.description.value    = ', e.target.description.value)
     e.preventDefault()
 
     const $form = $(e.target)

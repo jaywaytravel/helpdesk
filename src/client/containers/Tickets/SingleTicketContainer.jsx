@@ -260,6 +260,13 @@ class SingleTicketContainer extends React.Component {
     this.props.transferToThirdParty({ uid: this.ticket.uid })
   }
 
+  getColorById = (list, id) => {
+    const item = list.find(obj => {
+      return obj.id === id
+    })
+    return item ? item.htmlColor : null
+  }
+
   render () {
     const mappedGroups = this.props.groupsState
       ? this.props.groupsState.groups.map(group => {
@@ -272,6 +279,18 @@ class SingleTicketContainer extends React.Component {
           return { text: type.get('name'), value: type.get('_id'), raw: type.toJS() }
         })
       : []
+
+    const mappedPriorities = this.props.priorities
+      ? this.props.priorities.map(type => {
+          return { text: type.get('name'), htmlColor: type.get('htmlColor'), id: type.get('_id'), raw: type.toJS() }
+        })
+      : []
+
+    const colors = mappedPriorities.map(type => ({
+      name: type.text,
+      htmlColor: type.htmlColor,
+      id: type.id
+    }))
 
     // Perms
     const hasTicketUpdate = this.ticket && this.ticket.status.isResolved === false && helpers.canUser('tickets:update')
@@ -427,6 +446,11 @@ class SingleTicketContainer extends React.Component {
                                     value: e.target.value
                                   })
                                 }
+                                style={{
+                                  backgroundColor: this.getColorById(colors, this.ticket.priority._id),
+                                  color: '#fff',
+                                  paddingLeft: '5px'
+                                }}
                               >
                                 {this.ticket.type &&
                                   this.ticket.type.priorities &&
@@ -842,6 +866,7 @@ SingleTicketContainer.propTypes = {
   socket: PropTypes.object.isRequired,
   common: PropTypes.object.isRequired,
   ticketTypes: PropTypes.object.isRequired,
+  priorities: PropTypes.object.isRequired,
   fetchTicketTypes: PropTypes.func.isRequired,
   groupsState: PropTypes.object.isRequired,
   fetchGroups: PropTypes.func.isRequired,
@@ -858,6 +883,7 @@ const mapStateToProps = state => ({
   sessionUser: state.shared.sessionUser,
   socket: state.shared.socket,
   ticketTypes: state.ticketsState.types,
+  priorities: state.ticketsState.priorities,
   ticketStatuses: state.ticketsState.ticketStatuses,
   groupsState: state.groupsState
 })

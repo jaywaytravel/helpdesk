@@ -25,7 +25,7 @@ import api from '../../api'
 import helpers from 'lib/helpers'
 import Log from '../../logger'
 
-function * fetchDepartments ({ payload }) {
+function* fetchDepartments ({ payload }) {
   try {
     const response = yield call(api.departments.get, payload)
     yield put({ type: FETCH_DEPARTMENTS.SUCCESS, response })
@@ -37,7 +37,7 @@ function * fetchDepartments ({ payload }) {
   }
 }
 
-function * createDepartment ({ payload }) {
+function* createDepartment ({ payload }) {
   try {
     const response = yield call(api.departments.create, payload)
     yield put({ type: CREATE_DEPARTMENT.SUCCESS, response })
@@ -49,8 +49,8 @@ function * createDepartment ({ payload }) {
     Log.error(errorText, error)
   }
 }
-
-function * updateDepartment ({ payload }) {
+//TODO
+function* updateDepartment ({ payload }) {
   try {
     const response = yield call(api.departments.update, payload)
     yield put({ type: UPDATE_DEPARTMENT.SUCCESS, response })
@@ -63,7 +63,7 @@ function * updateDepartment ({ payload }) {
   }
 }
 
-function * deleteDepartment ({ payload }) {
+function* deleteDepartment ({ payload }) {
   try {
     const response = yield call(api.departments.delete, payload)
     yield put({ type: DELETE_DEPARTMENT.SUCCESS, payload, response })
@@ -75,7 +75,7 @@ function * deleteDepartment ({ payload }) {
   }
 }
 
-function * unloadDepartments ({ payload, meta }) {
+function* unloadDepartments ({ payload, meta }) {
   try {
     yield put({ type: UNLOAD_DEPARTMENTS.SUCCESS, payload, meta })
   } catch (error) {
@@ -83,7 +83,7 @@ function * unloadDepartments ({ payload, meta }) {
   }
 }
 
-export default function * watcher () {
+export default function* watcher () {
   yield takeLatest(FETCH_DEPARTMENTS.ACTION, fetchDepartments)
   yield takeLatest(CREATE_DEPARTMENT.ACTION, createDepartment)
   yield takeLatest(UPDATE_DEPARTMENT.ACTION, updateDepartment)

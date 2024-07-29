@@ -51,7 +51,6 @@ class CreateTicketModal extends React.Component {
       ticketDefaultTemplate: {},
       issueText: ''
     }
-    // this.handleInputChange = this.handleInputChange.bind(this)
   }
 
   componentDidMount () {
@@ -73,13 +72,6 @@ class CreateTicketModal extends React.Component {
       .get(`/api/v2/tickets/info/templates/`)
       .then(res => {
         const templates = res.data.ticketTemplates
-
-        console.log(
-          'did mount issueText = ',
-          templates.find(item => item.name === this.props.viewdata.get('defaultTicketType').get('name')).text
-        )
-
-        console.log('did mount templrates = ', templates)
 
         this.setState({
           ticketTemplates: templates,
@@ -103,23 +95,17 @@ class CreateTicketModal extends React.Component {
   }
 
   onTicketTypeSelectChange (e) {
-    console.log('e === ', e)
     this.priorityWrapper.classList.add('hide')
     this.priorityLoader.classList.remove('hide')
     axios
       .get(`/api/v1/tickets/type/${e.target.value}`)
       .then(res => {
-        console.log('res.data. === ', res.data)
-
         const type = res.data.type
         if (type && type.priorities) {
           this.priorities = orderBy(type.priorities, ['migrationNum'])
           this.selectedPriority = head(orderBy(type.priorities, ['migrationNum']))
             ? head(orderBy(type.priorities, ['migrationNum']))._id
             : ''
-
-          console.log('this.ticketTemplates === ', this.ticketTemplates)
-          console.log('ttttype === ', type)
 
           this.setState({
             ticketDefaultTemplate: this.state.ticketTemplates.find(item => item.name === type.name),
@@ -180,33 +166,12 @@ class CreateTicketModal extends React.Component {
     data.group = this.groupSelect.value
     data.type = this.typeSelect.value
     data.template = this.state.ticketDefaultTemplate._id
-    // data.tags = this.tagSelect.value
     data.priority = this.selectedPriority
     data.issue = this.issueMde.easymde.value()
     data.socketid = this.props.socket.io.engine.id
 
     this.props.createTicket(data)
   }
-
-  onGroupSelectChange (e) {
-    // this.groupAccounts = this.props.groups
-    //   .filter(grp => grp.get('_id') === e.target.value)
-    //   .first()
-    //   .get('members')
-    //   .map(a => {
-    //     return { text: a.get('fullname'), value: a.get('_id') }
-    //   })
-    //   .toArray()
-  }
-
-  // handleInputChange (event) {
-  //   const value = event?.target
-
-  //   if (value) {
-  //     console.log('value in onchangeee --- ', value)
-  //     this.setState({ issueText: value })
-  //   }
-  // }
 
   render () {
     const { shared, viewdata } = this.props
@@ -226,23 +191,13 @@ class CreateTicketModal extends React.Component {
     const defaultGroup = mappedGroups.find(grp => grp.text === 'All')
     mappedGroups = mappedGroups.filter(grp => (mappedGroups.length > 1 ? grp.text !== 'All' : defaultGroup || grp))
 
-    console.log('mappedGroups then ==== ', mappedGroups)
-
     const mappedTicketTypes = this.props.ticketTypes.toArray().map(type => {
       return { text: type.get('name'), value: type.get('_id') }
     })
 
-    // const mappedTicketTags = this.props.ticketTags.toArray().map(tag => {
-    //   return { text: tag.get('name'), value: tag.get('_id') }
-    // })
-
     return (
       <BaseModal {...this.props} options={{ bgclose: false }}>
         <form className={'uk-form-stacked'} onSubmit={e => this.onFormSubmit(e)}>
-          {console.log(JSON.stringify(this.props.ticketFormTypes))}
-
-          {console.log('state = ', this.state)}
-
           <div className='uk-margin-medium-bottom'>
             <label>Subject</label>
             <input
@@ -276,7 +231,6 @@ class CreateTicketModal extends React.Component {
                   showTextbox={false}
                   items={mappedGroups}
                   defaultValue={head(mappedGroups) ? head(mappedGroups).value : ''}
-                  onSelectChange={e => this.onGroupSelectChange(e)}
                   width={'100%'}
                   ref={i => (this.groupSelect = i)}
                 />
@@ -311,7 +265,6 @@ class CreateTicketModal extends React.Component {
             </div>
             <div ref={i => (this.priorityWrapper = i)} className={'uk-clearfix'}>
               {this.priorities.map(priority => {
-                console.log('priority ------- ', priority.description)
                 return (
                   <div key={priority._id} className={'uk-float-left'}>
                     <span className={'icheck-inline'}>
@@ -346,12 +299,10 @@ class CreateTicketModal extends React.Component {
             <div className='error-border-wrap uk-clearfix'>
               <EasyMDE
                 ref={i => (this.issueMde = i)}
-                // onChange={val => this.handleInputChange(val)}
                 onChange={val => (this.issueText = val)}
                 allowImageUpload={true}
                 inlineImageUploadUrl={'/tickets/uploadmdeimage'}
                 inlineImageUploadHeaders={{ ticketid: 'uploads' }}
-                // value={this.issueText}
                 defaultValue={this.state.issueText}
               />
             </div>
@@ -378,13 +329,10 @@ CreateTicketModal.propTypes = {
   ticketTypes: PropTypes.object.isRequired,
   priorities: PropTypes.object.isRequired,
   ticketFormTypes: PropTypes.object.isRequired,
-  //TAGS probably needs to be deleted at all
-  // ticketTags: PropTypes.object.isRequired,
   accounts: PropTypes.object.isRequired,
   groups: PropTypes.object.isRequired,
   createTicket: PropTypes.func.isRequired,
   fetchTicketTypes: PropTypes.func.isRequired,
-  // getTagsWithPage: PropTypes.func.isRequired,
   fetchGroups: PropTypes.func.isRequired,
   fetchAccountsCreateTicket: PropTypes.func.isRequired,
   ticketDefaultTemplate: PropTypes.any
@@ -397,7 +345,6 @@ const mapStateToProps = state => ({
   ticketTypes: state.ticketsState.types,
   ticketFormTypes: state.ticketsState.forms,
   priorities: state.ticketsState.priorities,
-  // ticketTags: state.tagsSettings.tags,
   groups: state.groupsState.groups,
   accounts: state.accountsState.accountsCreateTicket
 })
@@ -405,7 +352,6 @@ const mapStateToProps = state => ({
 export default connect(mapStateToProps, {
   createTicket,
   fetchTicketTypes,
-  // getTagsWithPage,
   fetchGroups,
   fetchAccountsCreateTicket
 })(CreateTicketModal)

@@ -154,10 +154,7 @@ ES.setupHooks = () => {
         subject: ticket.subject,
         issue: ticket.issue,
         date: ticket.date,
-        dateFormatted: moment
-          .utc(ticket.date)
-          .tz(ES.timezone)
-          .format('MMMM D YYYY'),
+        dateFormatted: moment.utc(ticket.date).tz(ES.timezone).format('MMMM D YYYY'),
         owner: ticket.owner,
         assignee: ticket.assignee,
         group: {
@@ -230,7 +227,7 @@ ES.rebuildIndex = async () => {
         FORK: 1,
         NODE_ENV: global.env,
         ELASTICSEARCH_INDEX_NAME: ES.indexName,
-        ELASTICSEARCH_URI: ELASTICSEARCH_URI,
+        ELASTICSEARCH_URI,
         MONGODB_URI: global.CONNECTION_URI
       }
     })
