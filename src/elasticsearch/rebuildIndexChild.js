@@ -67,7 +67,7 @@ async function deleteIndex (callback) {
   }
 }
 
-async function createIndex (callback) {
+async function createIndex(callback) {
   try {
     await ES.esclient.indices.create({
       index: ES.indexName,
@@ -103,75 +103,75 @@ async function createIndex (callback) {
           }
         },
         mappings: {
-          properties: {
-            type: {
-              type: 'keyword'
-            },
-            uid: {
-              type: 'text',
-              analyzer: 'leadahead',
-              search_analyzer: 'standard'
-            },
-            subject: {
-              type: 'text',
-              analyzer: 'leadahead',
-              search_analyzer: 'standard'
-            },
-            issue: {
-              type: 'text',
-              analyzer: 'leadahead',
-              search_analyzer: 'standard'
-            },
-            dateFormatted: {
-              type: 'text',
-              analyzer: 'leadahead',
-              search_analyzer: 'standard'
-            },
-            comments: {
-              properties: {
-                comment: {
-                  type: 'text',
-                  analyzer: 'leadahead',
-                  search_analyzer: 'standard'
-                },
-                owner: {
-                  properties: {
-                    email: {
-                      type: 'text',
-                      analyzer: 'email'
+            properties: {
+              type: {
+                type: 'keyword'
+              },
+              uid: {
+                type: 'text',
+                analyzer: 'leadahead',
+                search_analyzer: 'standard'
+              },
+              subject: {
+                type: 'text',
+                analyzer: 'leadahead',
+                search_analyzer: 'standard'
+              },
+              issue: {
+                type: 'text',
+                analyzer: 'leadahead',
+                search_analyzer: 'standard'
+              },
+              dateFormatted: {
+                type: 'text',
+                analyzer: 'leadahead',
+                search_analyzer: 'standard'
+              },
+              comments: {
+                properties: {
+                  comment: {
+                    type: 'text',
+                    analyzer: 'leadahead',
+                    search_analyzer: 'standard'
+                  },
+                  owner: {
+                    properties: {
+                      email: {
+                        type: 'text',
+                        analyzer: 'email'
+                      }
                     }
                   }
                 }
-              }
-            },
-            notes: {
-              properties: {
-                note: {
-                  type: 'text',
-                  analyzer: 'leadahead',
-                  search_analyzer: 'standard'
-                },
-                owner: {
-                  properties: {
-                    email: {
-                      type: 'text',
-                      analyzer: 'email'
+              },
+              notes: {
+                properties: {
+                  note: {
+                    type: 'text',
+                    analyzer: 'leadahead',
+                    search_analyzer: 'standard'
+                  },
+                  owner: {
+                    properties: {
+                      email: {
+                        type: 'text',
+                        analyzer: 'email'
+                      }
                     }
                   }
                 }
-              }
-            },
-            owner: {
-              properties: {
-                email: {
-                  type: 'text',
-                  analyzer: 'email'
+              },
+              owner: {
+                properties: {
+                  email: {
+                    type: 'text',
+                    analyzer: 'email'
+                  }
                 }
               }
             }
           }
         }
-      }
     })
 
     if (typeof callback === 'function') callback()
@@ -302,7 +302,7 @@ function crawlTickets (callback) {
           name: doc.priority.name,
           htmlColor: doc.priority.htmlColor
         },
-        ticketType: { _id: doc.type._id, name: doc.type.name },
+        ticketType: { _id: doc.type?._id, name: doc.type?.name },
         status: { _id: doc.status._id, name: doc.status.name, htmlColor: doc.status.htmlColor, uid: doc.status.uid },
         deleted: doc.deleted,
         comments: comments,

@@ -56,6 +56,7 @@ ES.testConnection = async callback => {
       try {
         if (process.env.ELASTICSEARCH_URI) ES.host = process.env.ELASTICSEARCH_URI
         else ES.host = nconf.get('elasticsearch:host') + ':' + nconf.get('elasticsearch:port')
+        ES.host = 'http://localhost:9200/'
 
         ES.esclient = new elasticsearch.Client({
           node: ES.host
@@ -215,7 +216,8 @@ ES.rebuildIndex = async () => {
 
     const s = settings.data.settings
 
-    const ELASTICSEARCH_URI = s.elasticSearchHost.value + ':' + s.elasticSearchPort.value
+    // const ELASTICSEARCH_URI = s.elasticSearchHost.value + ':' + s.elasticSearchPort.value
+    ELASTICSEARCH_URI = 'http://localhost:9200/'
 
     ES.buildClient(ELASTICSEARCH_URI)
 
@@ -292,7 +294,8 @@ ES.init = async callback => {
     ES.setupHooks()
 
     if (process.env.ELATICSEARCH_URI) ES.host = process.env.ELATICSEARCH_URI
-    else ES.host = settings.elasticSearchHost.value + ':' + settings.elasticSearchPort.value
+    else ES.host = 'http://localhost:9200/'
+
 
     ES.buildClient(ES.host)
 
