@@ -266,8 +266,8 @@ class CreateTicketModal extends React.Component {
             <div ref={i => (this.priorityWrapper = i)} className={'uk-clearfix'}>
               {this.priorities.map(priority => {
                 return (
-                  <div key={priority._id} className={'uk-float-left'}>
-                    <span className={'icheck-inline'}>
+                  <div key={priority._id} className={'uk-float-left'} style={{ width: '100%' }}>
+                    <span className={'icheck-inline'} style={{ display: 'flex', alignItems: 'center' }}>
                       <input
                         id={'p___' + priority._id}
                         name={'priority'}
@@ -286,7 +286,7 @@ class CreateTicketModal extends React.Component {
                         </span>
                       </label>
                       <label htmlFor={'p___' + priority._id} className={'mb-10 inline-label'}>
-                        <span className='uk-badge'>{priority.description}</span>
+                        <span>{priority.description}</span>
                       </label>
                     </span>
                   </div>
