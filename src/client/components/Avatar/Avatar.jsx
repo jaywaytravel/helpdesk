@@ -196,7 +196,7 @@ class Avatar extends React.Component {
           )}
           <img
             className='profile-pic uk-border-circle'
-            style={{ height: size, width: size }}
+            style={{ height: size, width: size, objectFit: 'cover' }}
             src={`/uploads/users/${image || 'defaultProfile.jpg'}`}
             alt=''
           />
