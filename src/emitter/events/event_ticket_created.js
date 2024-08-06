@@ -64,6 +64,8 @@ const parseMemberEmails = async ticket => {
   let members = concat(teamMembers, ticket.group.members)
   let emailTo = concat(teamMembers, ticket.group.sendMailTo)
 
+  console.log('members ===== ', members)
+
   emailTo = chain(emailTo)
     .filter(i => {
       return i.email !== ticket.owner.email
@@ -80,6 +82,10 @@ const parseMemberEmails = async ticket => {
     sendSocketUpdateToUser(member, ticket)
 
     if (typeof member.email === 'undefined' || emailTo.indexOf(member.email) === -1) continue
+
+    //TODO emails sends to team members
+
+    console.log('push ')
 
     emails.push(member.email)
   }
@@ -214,7 +220,15 @@ module.exports = async data => {
 
     const [emails] = await Promise.all([parseMemberEmails(ticket)])
 
-    if (mailerEnabled) await sendMail(ticket, emails, baseUrl, betaEnabled)
+    let recipient = []
+    if (process.env.SUPPORT_EMAIL) {
+      recipient = [process.env.SUPPORT_EMAIL]
+    } else {
+      recipient = ['helpdesk@jaywaytravel.com']
+    }
+
+    //todo consider better solution later
+    if (mailerEnabled) await sendMail(ticket, recipient, baseUrl, betaEnabled)
     if (ticket.group.public) await createPublicNotification(ticket)
     else await createNotification(ticket)
 
