@@ -34,7 +34,7 @@ import {
   TICKETS_ASSIGNEE_LOAD,
   TICKETS_ASSIGNEE_UPDATE,
   TICKETS_UI_DUEDATE_UPDATE,
-  TICKETS_DUEDATE_SET,
+  // TICKETS_DUEDATE_SET,
   TICKETS_UI_TAGS_UPDATE,
   TICKETS_COMMENT_NOTE_REMOVE,
   TICKETS_COMMENT_NOTE_SET
@@ -43,7 +43,7 @@ import {
 import AssigneeDropdownPartial from 'containers/Tickets/AssigneeDropdownPartial'
 import Avatar from 'components/Avatar/Avatar'
 import CommentNotePartial from 'containers/Tickets/CommentNotePartial'
-import DatePicker from 'components/DatePicker'
+// import DatePicker from 'components/DatePicker'
 import EasyMDE from 'components/EasyMDE'
 import IssuePartial from 'containers/Tickets/IssuePartial'
 import OffCanvasEditor from 'components/OffCanvasEditor'
@@ -488,7 +488,7 @@ class SingleTicketContainer extends React.Component {
                           {!hasTicketUpdate && <div className={'input-box'}>{this.ticket.group.name}</div>}
                         </div>
                         {/*  Due Date */}
-                        <div className='uk-width-1-1 p-0'>
+                        {/* <div className='uk-width-1-1 p-0'>
                           <span>Due Date</span> {hasTicketUpdate && <span>-&nbsp;</span>}
                           {hasTicketUpdate && (
                             <div className={'uk-display-inline'}>
@@ -524,7 +524,7 @@ class SingleTicketContainer extends React.Component {
                               {helpers.formatDate(this.ticket.dueDate, this.props.common.get('shortDateFormat'))}
                             </div>
                           )}
-                        </div>
+                        </div> */}
                       </div>
                     </div>
 

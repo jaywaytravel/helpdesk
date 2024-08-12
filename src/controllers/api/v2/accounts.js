@@ -136,7 +136,7 @@ accountsApi.get = function (req, res) {
 
   const obj = {
     limit: limit === -1 ? 999999 : limit,
-    page: page,
+    page,
     showDeleted: query.showDeleted && query.showDeleted === 'true'
   }
 
@@ -145,7 +145,7 @@ accountsApi.get = function (req, res) {
       User.getUserWithObject(obj, function (err, accounts) {
         if (err) return apiUtil.sendApiError(res, 500, err.message)
 
-        return apiUtil.sendApiSuccess(res, { accounts: accounts, count: accounts.length })
+        return apiUtil.sendApiSuccess(res, { accounts, count: accounts.length })
       })
       break
     case 'customers':
@@ -213,11 +213,11 @@ accountsApi.get = function (req, res) {
       User.getAdmins(obj, function (err, accounts) {
         if (err) return apiUtil.sendApiError(res, 500, err.message)
 
-        var resAccounts = []
+        const resAccounts = []
         async.eachSeries(
           accounts,
           function (account, next) {
-            var a = account.toObject()
+            const a = account.toObject()
             Department.getUserDepartments(account._id, function (err, departments) {
               if (err) return next(err)
 
@@ -273,7 +273,8 @@ accountsApi.update = async function (req, res) {
       !_.isUndefined(postData.passwordConfirm) &&
       !_.isEmpty(postData.passwordConfirm)
     ) {
-      if (postData.password.length < 4 || postData.passwordConfirm.length < 4) throw new Error('Password length is too short.')
+      if (postData.password.length < 4 || postData.passwordConfirm.length < 4)
+        throw new Error('Password length is too short.')
       if (postData.password === postData.passwordConfirm) {
         if (passwordComplexityEnabled) {
           if (!passwordComplexity.validate(postData.password)) throw new Error('Password does not meet requirements')

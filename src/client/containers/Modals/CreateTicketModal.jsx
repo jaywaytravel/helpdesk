@@ -209,6 +209,7 @@ class CreateTicketModal extends React.Component {
               data-validation-error-msg={`Please enter a valid Subject. Subject must contain at least ${viewdata
                 .get('ticketSettings')
                 .get('minSubject')} characters.`}
+              autoComplete='off'
             />
           </div>
           <div className='uk-margin-medium-bottom'>

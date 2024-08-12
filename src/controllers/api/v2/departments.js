@@ -49,40 +49,26 @@ apiDepartments.create = async (req, res) => {
 apiDepartments.update = async (req, res) => {
   const putData = req.body
   const id = req.params.id
+
   if (!putData || !id) return apiUtils.sendApiError_InvalidPostData(res)
 
   if (!putData.teams) putData.teams = []
   if (!putData.groups) putData.groups = []
   if (putData.allGroups) putData.groups = []
 
-  //TODO
+  try {
+    let department = await Department.findOne({ _id: id })
 
-  // try {
-  //   let department = await Department.findOneAndUpdate(({ _id: id }, putData, { new: true }))
-  //   department = await department.populate('teams groups')
+    if (department) {
+      await Department.updateOne({ _id: id }, { $set: putData })
+    }
 
-  //   return apiUtils.sendApiSuccess(res, { department })
-  // } catch (e) {
-  //   return apiUtils.sendApiError(res, 500, e.message)
-  // }
+    department = await department.populate('teams groups')
 
-  Department.findOne({ _id: id }, function (err, department) {
-    if (err || !department) return apiUtils.sendApiError(res, 400, 'Invalid Group')
-
-    if (putData.teams) department.teams = putData.teams
-    if (putData.groups) department.groups = putData.groups
-    if (putData.allGroups) department.allGroups = putData.sendMailTo
-
-    department.save(function (err, department) {
-      if (err) return apiUtils.sendApiError(res, 500, err.message)
-
-      department.populate('members sendMailTo', function (err, department) {
-        if (err) return apiUtils.sendApiError(res, 500, err.message)
-
-        return apiUtils.sendApiSuccess(res, { department })
-      })
-    })
-  })
+    return apiUtils.sendApiSuccess(res, { department })
+  } catch (e) {
+    return apiUtils.sendApiError(res, 500, e.message)
+  }
 }
 
 apiDepartments.delete = async (req, res) => {

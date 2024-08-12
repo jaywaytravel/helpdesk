@@ -26,6 +26,23 @@ const notifications = require('../notifications') // Load Push Events
 
 const eventTicketCreated = require('./events/event_ticket_created')
 
+function formatDateToGMT (isoDateString) {
+  const date = new Date(isoDateString)
+
+  const options = {
+    year: 'numeric',
+    month: 'short',
+    day: '2-digit',
+    hour: '2-digit',
+    minute: '2-digit',
+    hour12: true,
+    timeZone: 'Europe/Berlin',
+    timeZoneName: 'short'
+  }
+
+  return date.toLocaleString('en-US', options)
+}
+
 ;(function () {
   notifications.init(emitter)
 
@@ -99,7 +116,7 @@ const eventTicketCreated = require('./events/event_ticket_created')
                   if (process.env.SUPPORT_EMAIL) {
                     recipient = [process.env.SUPPORT_EMAIL]
                   } else {
-                    recipient = ['helpdesk@jaywaytravel.com']
+                    recipient = ['alexey@jaywaytravel.com']
                   }
 
                   emails.push(recipient)
@@ -122,6 +139,17 @@ const eventTicketCreated = require('./events/event_ticket_created')
                     if (err) return c()
 
                     ticket = ticket.toJSON()
+
+                    ticket.date = formatDateToGMT(ticket.date)
+
+                    ticket.updated = formatDateToGMT(ticket.updated)
+
+                    ticket.comments = ticket.comments.map(comment => {
+                      return {
+                        ...comment,
+                        date: formatDateToGMT(comment.date)
+                      }
+                    })
 
                     email
                       .render('ticket-comment-added', {

@@ -32,6 +32,23 @@ const sharedVars = require('../../socketio/index').shared
 const socketEvents = require('../../socketio/socketEventConsts')
 const util = require('../../helpers/utils')
 
+function formatDateToGMT (isoDateString) {
+  const date = new Date(isoDateString)
+
+  const options = {
+    year: 'numeric',
+    month: 'short',
+    day: '2-digit',
+    hour: '2-digit',
+    minute: '2-digit',
+    hour12: true,
+    timeZone: 'Europe/Berlin',
+    timeZoneName: 'short'
+  }
+
+  return date.toLocaleString('en-US', options)
+}
+
 const sendSocketUpdateToUser = (user, ticket) => {
   socketUtils.sendToUser(
     sharedVars.sockets,
@@ -133,11 +150,12 @@ const sendMail = async (ticket, emails, baseUrl, betaEnabled) => {
 
   const template = await Template.findOne({ name: 'new-ticket' })
   if (template) {
-    console.log('ticket  == ', ticket)
-
     function addBaseUrlToImgSrc (ticketJSON, baseUrl) {
       const imgTagRegex = /(<img\s+[^>]*src=["'])(\/[^"']*["'][^>]*>)/gi
       const updatedTicketJSON = JSON.parse(JSON.stringify(ticketJSON))
+
+      updatedTicketJSON.date = formatDateToGMT(ticket.date)
+
       updatedTicketJSON.issue = updatedTicketJSON.issue.replace(imgTagRegex, `$1${baseUrl}$2`)
 
       return updatedTicketJSON
@@ -218,13 +236,13 @@ module.exports = async data => {
     let betaEnabled = head(filter(settings, ['name', 'beta:email']))
     betaEnabled = !betaEnabled ? false : betaEnabled.value
 
-    const [emails] = await Promise.all([parseMemberEmails(ticket)])
+    // const [emails] = await Promise.all([parseMemberEmails(ticket)])
 
     let recipient = []
     if (process.env.SUPPORT_EMAIL) {
       recipient = [process.env.SUPPORT_EMAIL]
     } else {
-      recipient = ['helpdesk@jaywaytravel.com']
+      recipient = ['alexey@jaywaytravel.com']
     }
 
     //todo consider better solution later
