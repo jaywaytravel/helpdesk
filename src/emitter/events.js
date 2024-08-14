@@ -189,9 +189,130 @@ function formatDateToGMT (isoDateString) {
     )
   })
 
-  emitter.on('ticket:note:added', function (ticket) {
+  emitter.on('ticket:note:added', function (ticket, note) {
     // Goes to client
     io.sockets.emit('updateNotes', ticket)
+
+    settingsSchema.getSettingsByName(
+      ['tps:enable', 'tps:username', 'tps:apikey', 'mailer:enable'],
+      function (err, tpsSettings) {
+        if (err) return false
+
+        let tpsEnabled = _.head(_.filter(tpsSettings, ['name', 'tps:enable']))
+        let tpsUsername = _.head(_.filter(tpsSettings, ['name', 'tps:username']))
+        let tpsApiKey = _.head(_.filter(tpsSettings), ['name', 'tps:apikey'])
+        let mailerEnabled = _.head(_.filter(tpsSettings), ['name', 'mailer:enable'])
+        mailerEnabled = !mailerEnabled ? false : mailerEnabled.value
+
+        if (!tpsEnabled || !tpsUsername || !tpsApiKey) {
+          tpsEnabled = false
+        } else {
+          tpsEnabled = tpsEnabled.value
+          tpsUsername = tpsUsername.value
+          tpsApiKey = tpsApiKey.value
+        }
+
+        async.parallel(
+          [
+            // Send email to subscribed users
+            function (c) {
+              if (!mailerEnabled) return c()
+
+              console.log('in function')
+
+              const mailer = require('../mailer')
+              let emails = []
+              async.each(
+                ticket.subscribers,
+                function (member, cb) {
+                  // if (_.isUndefined(member) || _.isUndefined(member.email)) return cb()
+                  // if (member._id.toString() === note.owner.toString()) return cb()
+                  // if (member.deleted) return cb()
+
+                  // emails.push(member.email)
+
+                  cb()
+                },
+                function (err) {
+                  if (err) return c(err)
+
+                  emails = _.uniq(emails)
+
+                  let recipient = []
+                  if (process.env.SUPPORT_EMAIL) {
+                    recipient = [process.env.SUPPORT_EMAIL]
+                  } else {
+                    recipient = ['helpdesk@jaywaytravel.com']
+                  }
+
+                  emails.push(recipient)
+
+                  if (_.size(emails) < 1) {
+                    return c()
+                  }
+
+                  const email = new Email({
+                    views: {
+                      root: templateDir,
+                      options: {
+                        extension: 'handlebars'
+                      }
+                    }
+                  })
+
+                  ticket.populate('notes.owner', function (err, ticket) {
+                    if (err) winston.warn(err)
+                    if (err) return c()
+
+                    ticket = ticket.toJSON()
+
+                    ticket.date = formatDateToGMT(ticket.date)
+
+                    ticket.updated = formatDateToGMT(ticket.updated)
+
+                    ticket.notes = ticket.notes.map(note => {
+                      return {
+                        ...note,
+                        date: formatDateToGMT(note.date)
+                      }
+                    })
+
+                    email
+                      .render('ticket-note-added', {
+                        ticket,
+                        note
+                      })
+                      .then(function (html) {
+                        const mailOptions = {
+                          to: emails.join(),
+                          subject: 'Updated: Ticket #' + ticket.uid + '-' + ticket.subject,
+                          html,
+                          generateTextFromHTML: true
+                        }
+
+                        mailer.sendMail(mailOptions, function (err) {
+                          if (err) winston.warn('[trudesk:events:sendSubscriberEmail] - ' + err)
+
+                          winston.debug('Sent [' + emails.length + '] emails.')
+                        })
+
+                        return c()
+                      })
+                      .catch(function (err) {
+                        winston.warn('[trudesk:events:sendSubscriberEmail] - ' + err)
+                        return c(err)
+                      })
+                  })
+                }
+              )
+            }
+          ],
+          function () {
+            // Blank
+          }
+        )
+      }
+    )
   })
 
   emitter.on('trudesk:profileImageUpdate', function (data) {
