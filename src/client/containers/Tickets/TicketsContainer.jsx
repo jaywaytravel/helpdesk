@@ -329,6 +329,7 @@ class TicketsContainer extends React.Component {
               <TableHeader key={1} width={60} text={'Status'} />,
               <TableHeader key={2} width={65} text={'#'} />,
               <TableHeader key={3} width={'23%'} text={'Subject'} />,
+              <TableHeader key={3} width={'13%'} text={'Type'} />,
               <TableHeader key={4} width={110} text={'Created'} />,
               <TableHeader key={5} width={125} text={'Requester'} />,
               <TableHeader key={6} width={175} text={'Customer'} />,
@@ -420,6 +421,7 @@ class TicketsContainer extends React.Component {
                     </TableCell>
                     <TableCell className={'vam nbb'}>{ticket.get('uid')}</TableCell>
                     <TableCell className={'vam nbb'}>{ticket.get('subject')}</TableCell>
+                    <TableCell className={'vam nbb'}>{ticket.getIn(['type', 'name'])}</TableCell>
                     <TableCell className={'vam nbb'}>
                       {helpers.formatDate(ticket.get('date'), helpers.getShortDateFormat())}
                     </TableCell>
