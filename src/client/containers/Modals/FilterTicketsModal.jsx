@@ -55,7 +55,7 @@ class FilterTicketsModal extends React.Component {
     const endDate = e.target.filterDate_End.value
     const subject = e.target.subject.value
     const statuses = this.statusSelect.value
-    const tags = this.tagsSelect.value
+    // const tags = this.tagsSelect.value
     const types = this.typesSelect.value
     const groups = this.groupSelect.value
     const assignees = this.assigneeSelect.value
@@ -74,9 +74,9 @@ class FilterTicketsModal extends React.Component {
       queryString += `&tt=${i}`
     })
 
-    each(tags, i => {
-      queryString += `&tag=${i}`
-    })
+    // each(tags, i => {
+    //   queryString += `&tag=${i}`
+    // })
 
     each(groups, i => {
       queryString += `&gp=${i}`
@@ -93,11 +93,11 @@ class FilterTicketsModal extends React.Component {
   render () {
     const statuses = this.props.ticketStatuses.map(s => ({ text: s.get('name'), value: s.get('_id') })).toArray()
 
-    const tags = this.props.ticketTags
-      .map(t => {
-        return { text: t.get('name'), value: t.get('_id') }
-      })
-      .toArray()
+    // const tags = this.props.ticketTags
+    //   .map(t => {
+    //     return { text: t.get('name'), value: t.get('_id') }
+    //   })
+    //   .toArray()
 
     const types = this.props.ticketTypes
       .map(t => {

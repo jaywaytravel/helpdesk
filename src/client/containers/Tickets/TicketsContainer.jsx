@@ -334,7 +334,7 @@ class TicketsContainer extends React.Component {
               <TableHeader key={5} width={125} text={'Requester'} />,
               <TableHeader key={6} width={175} text={'Customer'} />,
               <TableHeader key={7} text={'Assignee'} />,
-              <TableHeader key={8} width={110} text={'Due Date'} />,
+              // <TableHeader key={8} width={110} text={'Due Date'} />,
               <TableHeader key={9} text={'Updated'} />
             ]}
           >
@@ -428,7 +428,6 @@ class TicketsContainer extends React.Component {
                     <TableCell className={'vam nbb'}>{ticket.getIn(['owner', 'fullname'])}</TableCell>
                     <TableCell className={'vam nbb'}>{ticket.getIn(['group', 'name'])}</TableCell>
                     <TableCell className={'vam nbb'}>{assignee()}</TableCell>
-                    <TableCell className={'vam nbb'}>{dueDate}</TableCell>
                     <TableCell className={'vam nbb'}>{updated}</TableCell>
                   </TableRow>
                 )
