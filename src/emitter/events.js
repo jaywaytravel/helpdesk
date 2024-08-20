@@ -159,7 +159,16 @@ function formatDateToGMT (isoDateString) {
                       .then(function (html) {
                         const mailOptions = {
                           to: emails.join(),
-                          subject: 'Updated: Ticket #' + ticket.uid + '-' + ticket.subject,
+                          subject:
+                            'Ticket #' +
+                            ticket.uid +
+                            ' Updated' +
+                            ' - ' +
+                            ticket.subject +
+                            ' - ' +
+                            ticket.priority.name +
+                            ' ' +
+                            ticket.type.name,
                           html,
                           generateTextFromHTML: true
                         }
@@ -285,7 +294,16 @@ function formatDateToGMT (isoDateString) {
                       .then(function (html) {
                         const mailOptions = {
                           to: emails.join(),
-                          subject: 'Updated: Ticket #' + ticket.uid + '-' + ticket.subject,
+                          subject:
+                            'Ticket #' +
+                            ticket.uid +
+                            ' Updated' +
+                            ' - ' +
+                            ticket.subject +
+                            ' - ' +
+                            ticket.priority.name +
+                            ' ' +
+                            ticket.type.name,
                           html,
                           generateTextFromHTML: true
                         }
