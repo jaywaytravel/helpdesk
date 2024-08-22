@@ -296,22 +296,43 @@ function formatDateToGMT (isoDateString) {
                     if (err) winston.warn(err)
                     if (err) return c()
 
-                    ticket = ticket.toJSON()
+                    function addBaseUrlToImgSrc (ticketJSON, baseUrl) {
+                      const imgTagRegex = /(<img\s+[^>]*src=["'])(\/[^"']*["'][^>]*>)/gi
+                      const updatedTicketJSON = JSON.parse(JSON.stringify(ticketJSON))
+
+                      updatedTicketJSON.date = formatDateToGMT(ticket.date)
+
+                      updatedTicketJSON.issue = updatedTicketJSON.issue.replace(imgTagRegex, `$1${baseUrl}$2`)
+
+                      return updatedTicketJSON
+                    }
 
                     ticket.date = formatDateToGMT(ticket.date)
 
                     ticket.updated = formatDateToGMT(ticket.updated)
 
                     ticket.notes = ticket.notes.map(note => {
+                      const updatedComment = JSON.parse(JSON.stringify(note))
+                      const imgTagRegex = /(<img\s+[^>]*src=["'])(\/[^"']*["'][^>]*>)/gi
+                      note.note = updatedComment.note.replace(
+                        imgTagRegex,
+                        `$1${process.env.BASE_URL ? process.env.BASE_URL : BASE_URL}$2`
+                      )
+
                       return {
-                        ...note,
+                        note: note.note,
                         date: formatDateToGMT(note.date)
                       }
                     })
 
+                    const updatedTicket = addBaseUrlToImgSrc(
+                      ticket,
+                      process.env.BASE_URL ? process.env.BASE_URL : BASE_URL
+                    )
+
                     email
                       .render('ticket-note-added', {
-                        ticket,
+                        updatedTicket,
                         note
                       })
                       .then(function (html) {
