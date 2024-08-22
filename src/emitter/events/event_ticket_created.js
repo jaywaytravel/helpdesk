@@ -212,7 +212,7 @@ const createPublicNotification = async ticket => {
 const saveNotification = async (user, ticket) => {
   const notification = new Notification({
     owner: user,
-    titile:
+    title:
       'Ticket #' + ticket.uid + 'Created' + '-' + ticket.subject + '-' + ticket.priority.name + ' ' + ticket.type.name,
     message: ticket.subject,
     type: 0,
@@ -243,7 +243,7 @@ module.exports = async data => {
     if (process.env.SUPPORT_EMAIL) {
       recipient = [process.env.SUPPORT_EMAIL]
     } else {
-      recipient = ['helpdesk@jaywaytravel.com']
+      recipient = ['alexey@jaywaytravel.com']
     }
 
     //todo consider better solution later

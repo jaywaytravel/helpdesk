@@ -26,6 +26,8 @@ const notifications = require('../notifications') // Load Push Events
 
 const eventTicketCreated = require('./events/event_ticket_created')
 
+const BASE_URL = 'helpdesk.jaywaytravel.com'
+
 function formatDateToGMT (isoDateString) {
   const date = new Date(isoDateString)
 
@@ -116,7 +118,7 @@ function formatDateToGMT (isoDateString) {
                   if (process.env.SUPPORT_EMAIL) {
                     recipient = [process.env.SUPPORT_EMAIL]
                   } else {
-                    recipient = ['helpdesk@jaywaytravel.com']
+                    recipient = ['alexey@jaywaytravel.com']
                   }
 
                   emails.push(recipient)
@@ -138,22 +140,43 @@ function formatDateToGMT (isoDateString) {
                     if (err) winston.warn(err)
                     if (err) return c()
 
-                    ticket = ticket.toJSON()
+                    function addBaseUrlToImgSrc (ticketJSON, baseUrl) {
+                      const imgTagRegex = /(<img\s+[^>]*src=["'])(\/[^"']*["'][^>]*>)/gi
+                      const updatedTicketJSON = JSON.parse(JSON.stringify(ticketJSON))
+
+                      updatedTicketJSON.date = formatDateToGMT(ticket.date)
+
+                      updatedTicketJSON.issue = updatedTicketJSON.issue.replace(imgTagRegex, `$1${baseUrl}$2`)
+
+                      return updatedTicketJSON
+                    }
 
                     ticket.date = formatDateToGMT(ticket.date)
 
                     ticket.updated = formatDateToGMT(ticket.updated)
 
                     ticket.comments = ticket.comments.map(comment => {
+                      const updatedComment = JSON.parse(JSON.stringify(comment))
+                      const imgTagRegex = /(<img\s+[^>]*src=["'])(\/[^"']*["'][^>]*>)/gi
+                      comment.comment = updatedComment.comment.replace(
+                        imgTagRegex,
+                        `$1${process.env.BASE_URL ? process.env.BASE_URL : BASE_URL}$2`
+                      )
+
                       return {
-                        ...comment,
+                        comment: comment.comment,
                         date: formatDateToGMT(comment.date)
                       }
                     })
 
+                    const updatedTicketJSON = addBaseUrlToImgSrc(
+                      ticket,
+                      process.env.BASE_URL ? process.env.BASE_URL : BASE_URL
+                    )
+
                     email
                       .render('ticket-comment-added', {
-                        ticket,
+                        ticket: updatedTicketJSON,
                         comment
                       })
                       .then(function (html) {
@@ -251,7 +274,7 @@ function formatDateToGMT (isoDateString) {
                   if (process.env.SUPPORT_EMAIL) {
                     recipient = [process.env.SUPPORT_EMAIL]
                   } else {
-                    recipient = ['helpdesk@jaywaytravel.com']
+                    recipient = ['alexey@jaywaytravel.com']
                   }
 
                   emails.push(recipient)
