@@ -100,11 +100,6 @@ class SingleTicketLoading extends React.Component {
         {/* Right Side */}
         <div className='page-message nopadding' style={{ marginLeft: 360 }}>
           <div className='page-title-right noshadow'>
-            <div className='page-top-comments uk-float-right'>
-              <a role='button' className='btn no-ajaxy'>
-                Add Comment
-              </a>
-            </div>
             <div
               className='onoffswitch subscribeSwitch uk-float-right'
               style={{ marginRight: 10, position: 'relative', top: 18 }}

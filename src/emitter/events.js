@@ -164,7 +164,7 @@ function formatDateToGMT (isoDateString) {
                       )
 
                       return {
-                        comment: comment.comment,
+                        comment,
                         date: formatDateToGMT(comment.date)
                       }
                     })
@@ -320,8 +320,8 @@ function formatDateToGMT (isoDateString) {
                       )
 
                       return {
-                        note: note.note,
-                        date: formatDateToGMT(note.date)
+                        note,
+                        date: formatDateToGMT(note.sdate)
                       }
                     })
 
@@ -332,7 +332,7 @@ function formatDateToGMT (isoDateString) {
 
                     email
                       .render('ticket-note-added', {
-                        updatedTicket,
+                        ticket: updatedTicket,
                         note
                       })
                       .then(function (html) {

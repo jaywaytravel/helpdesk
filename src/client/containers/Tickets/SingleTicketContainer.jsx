@@ -570,18 +570,6 @@ class SingleTicketContainer extends React.Component {
                       </a>
                     </div>
                   )}
-                  <div className='page-top-comments uk-float-right'>
-                    <a
-                      role='button'
-                      className='btn no-ajaxy'
-                      onClick={e => {
-                        e.preventDefault()
-                        helpers.scrollToBottom('.page-content-right', true)
-                      }}
-                    >
-                      Add Comment
-                    </a>
-                  </div>
                   <div
                     className='onoffswitch subscribeSwitch uk-float-right'
                     style={{ marginRight: 10, position: 'relative', top: 18 }}
