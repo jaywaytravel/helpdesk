@@ -243,7 +243,7 @@ module.exports = async data => {
     if (process.env.SUPPORT_EMAIL) {
       recipient = [process.env.SUPPORT_EMAIL]
     } else {
-      recipient = ['alexey@jaywaytravel.com']
+      recipient = ['helpdesk@jaywaytravel.com']
     }
 
     //todo consider better solution later
