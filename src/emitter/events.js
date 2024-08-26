@@ -94,8 +94,6 @@ function formatDateToGMT (isoDateString) {
             function (c) {
               if (!mailerEnabled) return c()
 
-              console.log('in function')
-
               const mailer = require('../mailer')
               let emails = []
               async.each(
@@ -164,7 +162,7 @@ function formatDateToGMT (isoDateString) {
                       )
 
                       return {
-                        comment,
+                        ...comment,
                         date: formatDateToGMT(comment.date)
                       }
                     })
@@ -250,8 +248,6 @@ function formatDateToGMT (isoDateString) {
             function (c) {
               if (!mailerEnabled) return c()
 
-              console.log('in function')
-
               const mailer = require('../mailer')
               let emails = []
               async.each(
@@ -320,8 +316,8 @@ function formatDateToGMT (isoDateString) {
                       )
 
                       return {
-                        note,
-                        date: formatDateToGMT(note.sdate)
+                        ...note,
+                        date: formatDateToGMT(note.date)
                       }
                     })
 
