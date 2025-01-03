@@ -12,14 +12,20 @@
  *  Copyright (c) 2014-2022. Trudesk, Inc (Chris Brame) All rights reserved.
  */
 
-import { fromJS, Map, List } from 'immutable'
+import { fromJS, List } from 'immutable'
 import { handleActions } from 'redux-actions'
 import { sortBy, map } from 'lodash'
 import {
   FETCH_DASHBOARD_DATA,
   FETCH_DASHBOARD_OVERDUE_TICKETS,
   FETCH_DASHBOARD_TOP_GROUPS,
-  FETCH_DASHBOARD_TOP_TAGS
+  FETCH_DASHBOARD_TOP_TAGS,
+  FETCH_COUNT_BY_TYPE,
+  FETCH_TOTAL_TICKETS_THIS_MONTH,
+  FETCH_TOTAL_TICKETS_LAST_MONTH,
+  FETCH_CLOSED_OR_REJECTED_LAST_MONTH,
+  FETCH_TICKETS_BY_STATUS_LAST_MONTH,
+  FETCH_AVERAGE_RESOLUTION_TIME
 } from 'actions/types'
 
 const initialState = {
@@ -33,6 +39,10 @@ const initialState = {
   ticketAvg: null,
   ticketCount: 0,
   closedCount: 0,
+  totalTicketsThisMonth: 0,
+  totalTicketsLastMonth: 0,
+
+  avgResolutionTime: null,
 
   loadingTopGroups: false,
   topGroups: List([]),
@@ -41,21 +51,29 @@ const initialState = {
   topTags: List([]),
 
   loadingOverdueTickets: false,
-  overdueTickets: List([])
+  overdueTickets: List([]),
+
+  
+  closedOrRejectedLastMonth: List([]),
+  loadingClosedOrRejectedLastMonth: false,
+
+  ticketsByStatusLastMonth: List([]),
+  loadingTicketsByStatusLastMonth: false,
+  
+  countByType: List([]),
+  loadingCountByType: false,
 }
 
 const reducer = handleActions(
   {
     [FETCH_DASHBOARD_DATA.PENDING]: state => {
-      return {
-        ...state,
-        loading: true
-      }
+      return { ...state, loading: true }
     },
 
     [FETCH_DASHBOARD_DATA.SUCCESS]: (state, action) => {
       return {
         ...state,
+        tickets: fromJS(action.response.tickets),
         loading: false,
         lastUpdated: action.response.lastUpdated,
         ticketBreakdownData: fromJS(action.response.data),
@@ -71,8 +89,8 @@ const reducer = handleActions(
 
     [FETCH_DASHBOARD_TOP_GROUPS.PENDING]: state => {
       return {
-        ...state,
-        loadingTopGroups: true
+        ...state, 
+        loadingTopGroups: true 
       }
     },
 
@@ -125,7 +143,71 @@ const reducer = handleActions(
         loadingOverdueTickets: false,
         overdueTickets: fromJS(action.response.tickets)
       }
-    }
+    },
+
+    [FETCH_COUNT_BY_TYPE.PENDING]: state => {
+      return { ...state, loadingCountByType: true }
+    },
+
+    [FETCH_COUNT_BY_TYPE.SUCCESS]: (state, action) => {
+      let result = sortBy(action.response, i => i.count)
+        .reverse()
+
+      result = map(result, v => [v._id, v.count])
+
+      return { ...state, loadingCountByType: false, countByType: fromJS(result) }
+    },
+
+    [FETCH_TOTAL_TICKETS_THIS_MONTH.PENDING]: state => {
+      return { ...state, loading: true }
+    },
+
+    [FETCH_TOTAL_TICKETS_THIS_MONTH.SUCCESS]: (state, action) => {
+      return { ...state, totalTicketsThisMonth: action.response.count }
+    },
+
+    [FETCH_TOTAL_TICKETS_LAST_MONTH.PENDING]: state => {
+      return { ...state, loading: true }
+    },
+
+    [FETCH_TOTAL_TICKETS_LAST_MONTH.SUCCESS]: (state, action) => {
+      return { ...state, totalTicketsLastMonth: action.response.count }
+    },
+
+    [FETCH_CLOSED_OR_REJECTED_LAST_MONTH.PENDING]: state => {
+      return { ...state, loadingClosedOrRejectedLastMonth: true }
+    },
+
+    [FETCH_CLOSED_OR_REJECTED_LAST_MONTH.SUCCESS]: (state, action) => {
+      let result = sortBy(action.response, i => i.count)
+        .reverse()
+
+      result = map(result, v => [v._id, v.count])
+
+      return { ...state, loadingClosedOrRejectedLastMonth: false, closedOrRejectedLastMonth: fromJS(result) }
+    },
+
+    [FETCH_TICKETS_BY_STATUS_LAST_MONTH.PENDING]: state => {
+      return { ...state, loadingTicketsByStatusLastMonth: true }
+    },
+
+    [FETCH_TICKETS_BY_STATUS_LAST_MONTH.SUCCESS]: (state, action) => {
+      let result = sortBy(action.response, i => i.count)
+        .reverse()
+
+      result = map(result, v => [v._id, v.count])
+
+
+      return { ...state, loadingTicketsByStatusLastMonth: false, ticketsByStatusLastMonth: fromJS(result) }
+    },
+
+    [FETCH_AVERAGE_RESOLUTION_TIME.PENDING]: state => {
+      return { ...state, loading: true }
+    },
+
+    [FETCH_AVERAGE_RESOLUTION_TIME.SUCCESS]: (state, action) => {
+      return { ...state, avgResolutionTime: action.response.avgResolutionTime }
+    },
   },
   initialState
 )

@@ -33,6 +33,31 @@ api.dashboard.getTopGroups = payload => {
     return res.data
   })
 }
+
+api.dashboard.getCountByType = () => {
+  return axios.get('/api/v1/tickets/count/bytypes').then(res => res.data);
+};
+
+api.dashboard.getTotalTicketsThisMonth = () => {
+  return axios.get('/api/v1/tickets/count/this-month').then(res => res.data);
+};
+
+api.dashboard.getTotalTicketsLastMonth = () => {
+  return axios.get('/api/v1/tickets/count/last-month').then(res => res.data);
+};
+
+api.dashboard.getClosedOrRejectedLastMonth = () => {
+  return axios.get('/api/v1/tickets/count/closed-rejected/last-month').then(res => res.data);
+};
+
+api.dashboard.getTicketsByStatusLastMonth = () => {
+  return axios.get('/api/v1/tickets/count/statuses/last-month').then(res => res.data);
+};
+
+api.dashboard.getAverageResolutionTime = () => {
+  return axios.get('/api/v1/tickets/average-resolution-time').then(res => res.data);
+};
+
 api.dashboard.getTopTags = payload => {
   const timespan = payload.timespan || 30
   return axios.get(`/api/v1/tickets/count/tags/${timespan}`).then(res => {
@@ -41,6 +66,12 @@ api.dashboard.getTopTags = payload => {
 }
 api.dashboard.getOverdueTickets = () => {
   return axios.get('/api/v1/tickets/overdue').then(res => {
+    return res.data
+  })
+}
+
+api.dashboard.getTickets = () => {
+  return axios.get('/api/v1/tickets').then(res => {
     return res.data
   })
 }
@@ -207,7 +238,6 @@ api.tickets.transferToThirdParty = ({ uid }) => {
 
 api.tickets.fetchTicketTypes = () => {
   return axios.get('/api/v2/tickets/info/types').then(res => {
-    console.log('bla bla')
     return res.data
   })
 }

@@ -2111,4 +2111,70 @@ apiTickets.restoreDeleted = function (req, res) {
   })
 }
 
+apiTickets.getCountByType = function (req, res) {
+  const ticketModel = require('../../../models/ticket')
+  
+
+  ticketModel.getCountByType(function (err, response) {
+    if (err) return res.status(400).json({ error: 'Invalid Request' })
+    return res.json({ ...response })
+  })
+}
+
+apiTickets.getTotalTicketsThisMonth = function (req, res) {
+  const ticketModel = require('../../../models/ticket')
+
+
+  ticketModel.getTotalTicketsThisMonth(function (err, count) {
+    if (err) return res.status(400).json({ error: 'Invalid Request' })
+      res.json({ count })
+  })
+}
+
+apiTickets.getTotalTicketsLastMonth = function (req, res) {
+  const ticketModel = require('../../../models/ticket')
+
+  ticketModel.getTotalTicketsLastMonth(function (err, count) {
+    if (err) return res.status(400).json({ error: 'Invalid Request' })
+
+      res.json({ count })
+  })
+}
+
+apiTickets.getClosedOrRejectedLastMonth = function (req, res) {
+  const ticketModel = require('../../../models/ticket')
+
+  ticketModel.getClosedOrRejectedLastMonth(function (err, response) {
+    if (err) return res.status(400).json({ error: 'Invalid Request' })
+      res.json({ ...response })
+  })
+}
+
+apiTickets.getTicketsByStatusLastMonth = function (req, res) {
+  const ticketModel = require('../../../models/ticket')
+
+  ticketModel.getTicketsByStatusLastMonth(function (err, response) {
+    if (err) return res.status(400).json({ error: 'Invalid Request' })
+
+      res.json({ ...response })
+  })
+}
+
+apiTickets.getAverageResolutionTime = function (req, res) {
+  const ticketModel = require('../../../models/ticket')
+
+  ticketModel.getAverageResolutionTime(function (err, response) {
+    if (err) return res.status(400).json({ error: 'Invalid Request' })
+
+      const tvt = moment.duration(response.avgResolutionTimeInMinutes, 'minutes').asHours()
+      const upd = {
+        avgResolutionTime: Math.floor(tvt),
+        totalTickets: response.totalTickets
+
+      }
+
+      res.json({ ...upd })
+  })
+}
+
 module.exports = apiTickets

@@ -46,8 +46,12 @@ class EasyMDE extends React.Component {
       uploadImage: true,
       autoDownloadFontAwesome: false,
       status: false,
-      spellChecker: false
-    })
+      // spellChecker: 
+
+      spellChecker: function(editor) {
+        // const editor = this.easymde;
+        return CodeMirrorSpellChecker({codeMirrorInstance: editor});
+  }})
 
     this.easymde.codemirror.on('change', () => {
       this.onTextareaChanged(this.easymde.value())

@@ -1692,4 +1692,226 @@ ticketSchema.statics.getDeleted = function (callback) {
   return this.model(COLLECTION).find({ deleted: true }).populate('group').sort({ uid: -1 }).limit(1000).exec(callback)
 }
 
+
+ticketSchema.statics.getCountByType = function (callback) {
+  const now = new Date()
+  const startOfLastMonth = new Date(now.getFullYear(), now.getMonth() - 1, 1)
+  const endOfLastMonth = new Date(now.getFullYear(), now.getMonth(), 0)
+
+  const self = this
+  const q = self.model(COLLECTION).aggregate([
+    {
+      $match: {
+        deleted: false,
+        date: {
+          $gte: startOfLastMonth,
+          $lte: endOfLastMonth
+        }
+      }
+    },
+    {
+      $lookup: {
+        from: "tickettypes",
+        localField: "type",
+        foreignField: "_id",
+        as: "typeDetails"
+      }
+    },
+    {
+      $unwind: "$typeDetails"
+    },
+    {
+      $group: {
+        _id: "$typeDetails.name",
+        count: { $sum: 1 } 
+      }
+    }
+  ])
+
+  if (callback) {
+    return q.exec(callback)
+  }
+
+  return q.exec()
+}
+
+ticketSchema.statics.getTotalTicketsThisMonth = function (callback) {
+  const self = this;
+
+  const now = moment();
+  const startOfMonth = now.clone().startOf('month').toDate();
+  const endOfMonth = now.clone().endOf('month').toDate();
+
+  console.log("startOfMonth: ", startOfMonth);
+  console.log("endOfMonth: ", endOfMonth);
+
+  const q = self.model(COLLECTION).countDocuments({
+    deleted: false,
+    date: { $gte: startOfMonth, $lte: endOfMonth },
+  });
+
+  if (callback) {
+    return q.exec(callback);
+  }
+
+  return q.exec();
+};
+
+ticketSchema.statics.getTotalTicketsLastMonth = function (callback) {
+  const self = this;
+
+  const now = moment();
+  const startOfLastMonth = now.clone().subtract(1, 'month').startOf('month').toDate();
+  const endOfLastMonth = now.clone().subtract(1, 'month').endOf('month').toDate();
+
+
+  const q = self.model(COLLECTION).countDocuments({
+    deleted: false,
+    date: { $gte: startOfLastMonth, $lte: endOfLastMonth },
+  });
+
+  if (callback) {
+    return q.exec(callback);
+  }
+
+  return q.exec();
+};
+
+ticketSchema.statics.getClosedOrRejectedLastMonth = function (callback) {
+  const self = this;
+
+  const now = moment();
+  const startOfLastMonth = now.clone().subtract(1, 'month').startOf('month').toDate();
+  const endOfLastMonth = now.clone().subtract(1, 'month').endOf('month').toDate();
+
+
+  const q = self.model(COLLECTION).aggregate([
+    {
+      $match: {
+        deleted: false,
+        date: { $gte: startOfLastMonth, $lte: endOfLastMonth },
+      }
+    },
+    {
+      $lookup: {
+        from: "statuses",
+        localField: "status",
+        foreignField: "_id",
+        as: "statusDetails"
+      }
+    },
+    {
+      $unwind: "$statusDetails"
+    },
+    {
+      $match: {
+        "statusDetails.name": { $in: ['Closed', 'Rejected'] }
+      }
+    },
+    {
+      $group: {
+        _id: "$statusDetails.name",
+        count: { $sum: 1 }
+      }
+    }
+  ]);
+
+  if (callback) {
+    return q.exec(callback);
+  }
+
+  return q.exec();
+};
+
+
+ticketSchema.statics.getTicketsByStatusLastMonth = function (callback) {
+  const self = this;
+
+  const now = moment();
+  const startOfLastMonth = now.clone().subtract(1, 'month').startOf('month').toDate();
+  const endOfLastMonth = now.clone().subtract(1, 'month').endOf('month').toDate();
+
+  const q = self.model(COLLECTION).aggregate([
+    {
+      $match: {
+        deleted: false,
+        date: { $gte: startOfLastMonth, $lte: endOfLastMonth },
+      },
+    },
+    {
+      $lookup: {
+        from: "statuses",
+        localField: "status",
+        foreignField: "_id",
+        as: "statusDetails"
+      }
+    },
+    {
+      $unwind: "$statusDetails"
+    },
+    {
+      $group: {
+        _id: "$statusDetails.name",
+        count: { $sum: 1 }
+      }
+    }
+  ]);
+
+  if (callback) {
+    return q.exec(callback);
+  }
+
+  return q.exec();
+};
+
+ticketSchema.statics.getAverageResolutionTime = function (callback) {
+  const self = this;
+
+  const q = self.find(
+    {
+      deleted: false,
+      'history.action': { $in: ['ticket:created', 'ticket:set:status:Resolved', 'ticket:set:status:Rejected'] },
+    },
+    {
+      history: 1,
+    }
+  );
+
+  return q.exec((err, tickets) => {
+    if (err) {
+      if (callback) return callback(err);
+      throw err;
+    }
+
+    const resolutionTimes = [];
+
+    for (const ticket of tickets) {
+      const createdEvent = ticket.history.find((event) => event.action === "ticket:created");
+      const resolvedEvent = ticket.history.find((event) =>
+        ["ticket:set:status:Resolved", "ticket:set:status:Rejected"].includes(event.action)
+      );
+
+      if (!createdEvent || !resolvedEvent) continue;
+
+      const createdDate = moment(createdEvent.date);
+      const resolvedDate = moment(resolvedEvent.date);
+
+      const diffInMinutes = resolvedDate.diff(createdDate, "minutes");
+      resolutionTimes.push(diffInMinutes);
+    }
+
+    const totalResolutionTime = resolutionTimes.reduce((sum, time) => sum + time, 0);
+    const avgResolutionTime = Math.round(totalResolutionTime / (resolutionTimes.length || 1));
+
+  const result = {
+      avgResolutionTimeInMinutes: avgResolutionTime,
+      totalTickets: resolutionTimes.length,
+    };
+
+    if (callback) return callback(null, result);
+    return result;
+  });
+};
+
+
 module.exports = mongoose.model(COLLECTION, ticketSchema)
