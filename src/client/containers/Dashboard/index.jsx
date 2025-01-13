@@ -9,14 +9,11 @@ import {
   fetchDashboardTopGroups,
   fetchDashboardTopTags,
   fetchDashboardOverdueTickets,
-  
-
   fetchCountByType,
-  fetchTotalTicketsThisMonth,
-  fetchTotalTicketsLastMonth,
-  fetchClosedOrRejectedLastMonth,
-  fetchTicketsByStatusLastMonth,
-  fetchAverageResolutionTime,
+  fetchTotalTicketsCount,
+  fetchTicketsByPriority,
+  fetchTicketsByStatus,
+  fetchAverageResolutionTime
 } from 'actions/dashboard'
 
 import Grid from 'components/Grid'
@@ -37,7 +34,10 @@ import helpers from 'lib/helpers'
 
 @observer
 class DashboardContainer extends React.Component {
-  @observable timespan = 60
+  @observable timespan = {
+    month: moment().format('M'),
+    year: moment().format('YYYY')
+  }
 
   constructor (props) {
     super(props)
@@ -51,21 +51,133 @@ class DashboardContainer extends React.Component {
     this.props.fetchDashboardTopTags({ timespan: this.timespan })
     this.props.fetchDashboardOverdueTickets()
 
-    this.props.fetchCountByType()
-    this.props.fetchTotalTicketsThisMonth()
-    this.props.fetchTotalTicketsLastMonth()
-    this.props.fetchClosedOrRejectedLastMonth()
-    this.props.fetchTicketsByStatusLastMonth()
-    this.props.fetchAverageResolutionTime()
-    
+    this.props.fetchCountByType({ timespan: this.timespan })
+    this.props.fetchTotalTicketsCount({ timespan: this.timespan })
+    // this.props.fetchTotalTicketsLastMonth()
+    this.props.fetchTicketsByStatus({ timespan: this.timespan })
+
+    this.props.fetchTicketsByPriority({ timespan: this.timespan })
+
+    this.props.fetchAverageResolutionTime({ timespan: this.timespan })
   }
 
-  onTimespanChange = e => {
+  onYearChange = e => {
     e.preventDefault()
-    this.timespan = e.target.value
-    this.props.fetchDashboardData({ timespan: e.target.value })
-    this.props.fetchDashboardTopGroups({ timespan: e.target.value })
-    this.props.fetchDashboardTopTags({ timespan: e.target.value })
+
+    this.timespan.year = e.target.value
+
+    this.props.fetchCountByType({
+      timespan: {
+        month: this.timespan.month,
+        year: e.target.value
+      }
+    })
+
+    this.props.fetchAverageResolutionTime({
+      timespan: {
+        month: this.timespan.month,
+        year: e.target.value
+      }
+    })
+
+    this.props.fetchTicketsByPriority({
+      timespan: {
+        month: this.timespan.month,
+        year: e.target.value
+      }
+    })
+
+    this.props.fetchTicketsByStatus({
+      timespan: {
+        month: this.timespan.month,
+        year: e.target.value
+      }
+    })
+
+    this.props.fetchTotalTicketsCount({
+      timespan: {
+        month: this.timespan.month,
+        year: e.target.value
+      }
+    })
+
+    this.props.fetchDashboardData({
+      timespan: {
+        month: this.timespan.month,
+        year: e.target.value
+      }
+    })
+    // this.props.fetchDashboardTopGroups({
+    //   timespan: {
+    //     ...this.timespan,
+    //     year: e.target.value
+    //   }
+    // })
+    // this.props.fetchDashboardTopTags({
+    //   timespan: {
+    //     month: this.timespan.month,
+    //     year: e.target.value
+    //   }
+    // })
+  }
+
+  onMonthChange = e => {
+    e.preventDefault()
+    this.timespan.month = e.target.value
+
+    this.props.fetchCountByType({
+      timespan: {
+        year: this.timespan.year,
+        month: e.target.value
+      }
+    })
+
+    this.props.fetchAverageResolutionTime({
+      timespan: {
+        year: this.timespan.year,
+        month: e.target.value
+      }
+    })
+
+    this.props.fetchTicketsByPriority({
+      timespan: {
+        year: this.timespan.year,
+        month: e.target.value
+      }
+    })
+
+    this.props.fetchTicketsByStatus({
+      timespan: {
+        year: this.timespan.year,
+        month: e.target.value
+      }
+    })
+
+    this.props.fetchTotalTicketsCount({
+      timespan: {
+        year: this.timespan.year,
+        month: e.target.value
+      }
+    })
+
+    this.props.fetchDashboardData({
+      timespan: {
+        ...this.timespan,
+        month: e.target.value
+      }
+    })
+    // this.props.fetchDashboardTopGroups({
+    //   timespan: {
+    //     ...this.timespan,
+    //     month: e.target.value
+    //   }
+    // })
+    // this.props.fetchDashboardTopTags({
+    //   timespan: {
+    //     ...this.timespan,
+    //     month: e.target.value
+    //   }
+    // })
   }
 
   render () {
@@ -96,7 +208,7 @@ class DashboardContainer extends React.Component {
 
     const yearList = [
       { text: '2025', value: '2025' },
-      { text: '2024', value: '2024' },
+      { text: '2024', value: '2024' }
     ]
 
     return (
@@ -106,62 +218,46 @@ class DashboardContainer extends React.Component {
           rightComponent={
             <div>
               <div className={'uk-float-right'} style={{ minWidth: 250 }}>
-                <div style={{ marginTop: 8 }}>
-                  <SingleSelect
-                    items={monthList}
-                    defaultValue={'12'}
-                    onSelectChange={e => this.onTimespanChange(e)}
-                  />
+                <div style={{ marginTop: 8, display: 'flex', justifyContent: 'flex-end' }}>
+                  <div style={{ width: '150px' }}>
+                    <SingleSelect
+                      items={monthList}
+                      defaultValue={this.timespan.month}
+                      onSelectChange={e => this.onMonthChange(e)}
+                    />
+                  </div>
 
-                  <SingleSelect
-                    items={yearList}
-                    defaultValue={'2024'}
-                    onSelectChange={e => this.onTimespanChange(e)}
-                  />
-
+                  <div style={{ width: '150px' }}>
+                    <SingleSelect
+                      items={yearList}
+                      defaultValue={this.timespan.year}
+                      onSelectChange={e => this.onYearChange(e)}
+                    />
+                  </div>
                 </div>
-              </div>
-              <div className={'uk-float-right uk-text-muted uk-text-small'} style={{ margin: '23px 25px 0 0' }}>
-                <strong>Last Updated: </strong>
-                <span>{lastUpdatedFormatted}</span>
               </div>
             </div>
           }
         />
         <PageContent>
           <Grid>
-            <GridItem width={'1-3'}>
+            <GridItem width={'1-2'}>
               <TruCard
                 content={
                   <div>
                     <div className='right uk-margin-top uk-margin-small-right'>
                       <PeityBar values={'5,3,9,6,5,9,7'} />
                     </div>
-                    <span className='uk-text-muted uk-text-small'>Total Tickets Created This Month</span>
+                    <span className='uk-text-muted uk-text-small'>Total Tickets Count</span>
                     <h2 className='uk-margin-remove'>
-                      <CountUp startNumber={0} endNumber={this.props.dashboardState.totalTicketsThisMonth || 0} />
+                      <CountUp startNumber={0} endNumber={this.props.dashboardState.totalTicketsCount || 0} />
                     </h2>
                   </div>
                 }
               />
             </GridItem>
 
-            <GridItem width={'1-3'}>
-              <TruCard
-                content={
-                  <div>
-                    <div className='right uk-margin-top uk-margin-small-right'>
-                      <PeityBar values={'5,3,9,6,5,9,7'} />
-                    </div>
-                    <span className='uk-text-muted uk-text-small'>Total Tickets Created Last Month</span>
-                    <h2 className='uk-margin-remove'>
-                    <CountUp startNumber={0} endNumber={this.props.dashboardState.totalTicketsLastMonth || 0} />
-                    </h2>
-                  </div>
-                }
-              />
-            </GridItem>
-            <GridItem width={'1-3'}>
+            <GridItem width={'1-2'}>
               <TruCard
                 content={
                   <div>
@@ -171,13 +267,16 @@ class DashboardContainer extends React.Component {
                     <span className='uk-text-muted uk-text-small'>Avg Resolution Time</span>
 
                     <h2 className='uk-margin-remove'>
-                      <CountUp endNumber={this.props.dashboardState.avgResolutionTime  || 0} extraText={'hours'} />
+                      <CountUp
+                        endNumber={this.props.dashboardState.avgResolutionTimeInHours || 0}
+                        extraText={'hours'}
+                      />
                     </h2>
                   </div>
                 }
               />
             </GridItem>
-            <GridItem width={'1-1'} extraClass={'uk-margin-medium-top'}>
+            {/* <GridItem width={'1-1'} extraClass={'uk-margin-medium-top'}>
               <TruCard
                 header={
                   <div className='uk-text-left'>
@@ -198,7 +297,7 @@ class DashboardContainer extends React.Component {
                   </div>
                 }
               />
-            </GridItem>
+            </GridItem> */}
             <GridItem width={'1-3'} extraClass={'uk-margin-medium-top'}>
               <TruCard
                 loaderActive={this.props.dashboardState.loadingCountByType}
@@ -218,34 +317,34 @@ class DashboardContainer extends React.Component {
             </GridItem>
             <GridItem width={'1-3'} extraClass={'uk-margin-medium-top'}>
               <TruCard
-                loaderActive={this.props.dashboardState.loadingClosedOrRejectedLastMonth}
+                loaderActive={this.props.dashboardState.loadingTicketsByPriority}
                 animateLoader={true}
                 style={{ minHeight: 256 }}
                 header={
                   <div className='uk-text-left'>
-                    <h6 style={{ padding: 15, margin: 0, fontSize: '14px' }}>Closed and Rejected Tickets Last Month</h6>
+                    <h6 style={{ padding: 15, margin: 0, fontSize: '14px' }}>Tickets Distribution by Priority</h6>
                   </div>
                 }
                 content={
                   <div>
-                    <D3Pie data={this.props.dashboardState.closedOrRejectedLastMonth.toJS()} />
+                    <D3Pie data={this.props.dashboardState.ticketsByPriority.toJS()} />
                   </div>
                 }
               />
             </GridItem>
             <GridItem width={'1-3'} extraClass={'uk-margin-medium-top'}>
               <TruCard
-                loaderActive={this.props.dashboardState.loadingTicketsByStatusLastMonth}
+                loaderActive={this.props.dashboardState.loadingTicketsByStatus}
                 animateLoader={true}
                 style={{ minHeight: 256 }}
                 header={
                   <div className='uk-text-left'>
-                    <h6 style={{ padding: 15, margin: 0, fontSize: '14px' }}>Tickets Status Breakdown for Last Month</h6>
+                    <h6 style={{ padding: 15, margin: 0, fontSize: '14px' }}>Tickets Distribution by Status</h6>
                   </div>
                 }
                 content={
                   <div>
-                    <D3Pie data={this.props.dashboardState.ticketsByStatusLastMonth.toJS()} />
+                    <D3Pie data={this.props.dashboardState.ticketsByStatus.toJS()} />
                   </div>
                 }
               />
@@ -263,12 +362,12 @@ DashboardContainer.propTypes = {
   fetchDashboardTopTags: PropTypes.func.isRequired,
   fetchDashboardOverdueTickets: PropTypes.func.isRequired,
   fetchCountByType: PropTypes.func.isRequired,
-  fetchTotalTicketsThisMonth: PropTypes.func.isRequired,
-  fetchTotalTicketsLastMonth: PropTypes.func.isRequired,
-  fetchClosedOrRejectedLastMonth: PropTypes.func.isRequired,
-  fetchTicketsByStatusLastMonth: PropTypes.func.isRequired,
-  fetchTicketsByStatusLastMonth: PropTypes.func.isRequired,
-  dashboardState: PropTypes.object.isRequired
+  fetchTotalTicketsCount: PropTypes.func.isRequired,
+  // fetchTotalTicketsLastMonth: PropTypes.func.isRequired,
+  fetchTicketsByStatus: PropTypes.func.isRequired,
+  fetchTicketsByPriority: PropTypes.func.isRequired,
+  dashboardState: PropTypes.object.isRequired,
+  fetchAverageResolutionTime: PropTypes.func.isRequired
 }
 
 const mapStateToProps = state => ({
@@ -282,9 +381,9 @@ export default connect(mapStateToProps, {
   fetchDashboardOverdueTickets,
 
   fetchCountByType,
-  fetchTotalTicketsThisMonth,
-  fetchTotalTicketsLastMonth,
-  fetchClosedOrRejectedLastMonth,
-  fetchTicketsByStatusLastMonth,
+  fetchTotalTicketsCount,
+  // fetchTotalTicketsLastMonth,
+  fetchTicketsByPriority,
+  fetchTicketsByStatus,
   fetchAverageResolutionTime
 })(DashboardContainer)

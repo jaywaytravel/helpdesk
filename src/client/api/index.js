@@ -22,8 +22,8 @@ const api = {}
 
 api.dashboard = {}
 api.dashboard.getData = payload => {
-  const timespan = payload.timespan || 30
-  return axios.get(`/api/v1/tickets/stats/${timespan}`).then(res => {
+  const timespan = payload.timespan
+  return axios.get(`/api/v1/tickets/stats?year=${timespan.year}&month=${timespan.month}`).then(res => {
     return res.data
   })
 }
@@ -34,29 +34,34 @@ api.dashboard.getTopGroups = payload => {
   })
 }
 
-api.dashboard.getCountByType = () => {
-  return axios.get('/api/v1/tickets/count/bytypes').then(res => res.data);
-};
+api.dashboard.getCountByType = payload => {
+  const timespan = payload.timespan
 
-api.dashboard.getTotalTicketsThisMonth = () => {
-  return axios.get('/api/v1/tickets/count/this-month').then(res => res.data);
-};
+  return axios.get(`/api/v1/tickets/count/bytypes?year=${timespan.year}&month=${timespan.month}`).then(res => res.data)
+}
 
-api.dashboard.getTotalTicketsLastMonth = () => {
-  return axios.get('/api/v1/tickets/count/last-month').then(res => res.data);
-};
+api.dashboard.getTotalTicketsThisMonth = payload => {
+  const timespan = payload.timespan
 
-api.dashboard.getClosedOrRejectedLastMonth = () => {
-  return axios.get('/api/v1/tickets/count/closed-rejected/last-month').then(res => res.data);
-};
+  return axios.get(`/api/v1/tickets/count?year=${timespan.year}&month=${timespan.month}`).then(res => res.data)
+}
 
-api.dashboard.getTicketsByStatusLastMonth = () => {
-  return axios.get('/api/v1/tickets/count/statuses/last-month').then(res => res.data);
-};
+api.dashboard.getTicketsByPriority = payload => {
+  const timespan = payload.timespan
+  return axios.get(`/api/v1/tickets/count/priority?year=${timespan.year}&month=${timespan.month}`).then(res => res.data)
+}
 
-api.dashboard.getAverageResolutionTime = () => {
-  return axios.get('/api/v1/tickets/average-resolution-time').then(res => res.data);
-};
+api.dashboard.getTicketsByStatus = payload => {
+  const timespan = payload.timespan
+  return axios.get(`/api/v1/tickets/count/status?year=${timespan.year}&month=${timespan.month}`).then(res => res.data)
+}
+
+api.dashboard.getAverageResolutionTime = payload => {
+  const timespan = payload.timespan
+  return axios
+    .get(`/api/v1/tickets/average-resolution-time?year=${timespan.year}&month=${timespan.month}`)
+    .then(res => res.data)
+}
 
 api.dashboard.getTopTags = payload => {
   const timespan = payload.timespan || 30

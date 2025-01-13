@@ -1026,29 +1026,29 @@ ticketSchema.statics.getCountWithObject = async function (grpId, object, callbac
  * @param {Number} status Status number to check
  * @param {function} callback MongoDB Query Callback
  */
-ticketSchema.statics.getTicketsByStatus = function (grpId, status, callback) {
-  if (_.isUndefined(grpId)) {
-    return callback('Invalid GroupId - TicketSchema.GetTickets()', null)
-  }
+// ticketSchema.statics.getTicketsByStatus = function (grpId, status, callback) {
+//   if (_.isUndefined(grpId)) {
+//     return callback('Invalid GroupId - TicketSchema.GetTickets()', null)
+//   }
 
-  if (!_.isArray(grpId)) {
-    return callback('Invalid GroupId (Must be of type Array) - TicketSchema.GetTickets()', null)
-  }
+//   if (!_.isArray(grpId)) {
+//     return callback('Invalid GroupId (Must be of type Array) - TicketSchema.GetTickets()', null)
+//   }
 
-  const self = this
+//   const self = this
 
-  const q = self
-    .model(COLLECTION)
-    .find({ group: { $in: grpId }, status, deleted: false })
-    .populate(
-      'owner assignee comments.owner notes.owner subscribers history.owner',
-      'username fullname email role image title'
-    )
-    .populate('type tags status group')
-    .sort({ uid: -1 })
+//   const q = self
+//     .model(COLLECTION)
+//     .find({ group: { $in: grpId }, status, deleted: false })
+//     .populate(
+//       'owner assignee comments.owner notes.owner subscribers history.owner',
+//       'username fullname email role image title'
+//     )
+//     .populate('type tags status group')
+//     .sort({ uid: -1 })
 
-  return q.exec(callback)
-}
+//   return q.exec(callback)
+// }
 
 /**
  * Gets Single ticket with given UID.
@@ -1692,38 +1692,56 @@ ticketSchema.statics.getDeleted = function (callback) {
   return this.model(COLLECTION).find({ deleted: true }).populate('group').sort({ uid: -1 }).limit(1000).exec(callback)
 }
 
+ticketSchema.statics.getCountByType = function (payload, callback) {
+  const { month, year } = payload
 
-ticketSchema.statics.getCountByType = function (callback) {
-  const now = new Date()
-  const startOfLastMonth = new Date(now.getFullYear(), now.getMonth() - 1, 1)
-  const endOfLastMonth = new Date(now.getFullYear(), now.getMonth(), 0)
-
+  if (_.isUndefined(month) || _.isNaN(month) || _.isUndefined(year) || _.isNaN(year)) {
+    throw new Error('Invalid month or year')
+  }
   const self = this
+
+  // Определяем начало и конец указанного месяца
+  const startOfMonth = moment
+    .utc()
+    .year(year)
+    .month(month - 1)
+    .startOf('month')
+    .toDate()
+  const endOfMonth = moment
+    .utc()
+    .year(year)
+    .month(month - 1)
+    .endOf('month')
+    .toDate()
+
+  console.log('startOfMonth: ', startOfMonth)
+  console.log('endOfMonth: ', endOfMonth)
+
   const q = self.model(COLLECTION).aggregate([
     {
       $match: {
         deleted: false,
         date: {
-          $gte: startOfLastMonth,
-          $lte: endOfLastMonth
+          $gte: startOfMonth,
+          $lte: endOfMonth
         }
       }
     },
     {
       $lookup: {
-        from: "tickettypes",
-        localField: "type",
-        foreignField: "_id",
-        as: "typeDetails"
+        from: 'tickettypes',
+        localField: 'type',
+        foreignField: '_id',
+        as: 'typeDetails'
       }
     },
     {
-      $unwind: "$typeDetails"
+      $unwind: '$typeDetails'
     },
     {
       $group: {
-        _id: "$typeDetails.name",
-        count: { $sum: 1 } 
+        _id: '$typeDetails.name',
+        count: { $sum: 1 }
       }
     }
   ])
@@ -1735,183 +1753,356 @@ ticketSchema.statics.getCountByType = function (callback) {
   return q.exec()
 }
 
-ticketSchema.statics.getTotalTicketsThisMonth = function (callback) {
-  const self = this;
+ticketSchema.statics.getTotalTicketsThisMonth = function (payload, callback) {
+  console.log('model payload ', payload)
 
-  const now = moment();
-  const startOfMonth = now.clone().startOf('month').toDate();
-  const endOfMonth = now.clone().endOf('month').toDate();
+  const { month, year } = payload
 
-  console.log("startOfMonth: ", startOfMonth);
-  console.log("endOfMonth: ", endOfMonth);
+  if (_.isUndefined(month) || _.isNaN(month) || _.isUndefined(year) || _.isNaN(year)) {
+    throw new Error('Invalid month or year')
+  }
+  const self = this
+
+  // Определяем начало и конец указанного месяца
+  const startOfMonth = moment
+    .utc()
+    .year(year)
+    .month(month - 1)
+    .startOf('month')
+    .toDate()
+  const endOfMonth = moment
+    .utc()
+    .year(year)
+    .month(month - 1)
+    .endOf('month')
+    .toDate()
+
+  console.log('startOfMonth: ', startOfMonth)
+  console.log('endOfMonth: ', endOfMonth)
+
+  // Строим запрос
+  const query = {
+    deleted: false,
+    date: { $gte: startOfMonth, $lte: endOfMonth }
+  }
+
+  const q = self.model(COLLECTION).countDocuments(query)
+
+  if (callback) {
+    return q.exec(callback)
+  }
+
+  return q.exec()
+}
+
+ticketSchema.statics.getTotalTicketsLastMonth = function (payload, callback) {
+  console.log('model payload ', payload)
+
+  const { month, year } = payload
+
+  if (_.isUndefined(month) || _.isNaN(month) || _.isUndefined(year) || _.isNaN(year)) {
+    throw new Error('Invalid month or year')
+  }
+
+  // Определяем начало и конец указанного месяца
+  const startOfMonth = moment
+    .utc()
+    .year(year)
+    .month(month - 1)
+    .startOf('month')
+    .toDate()
+  const endOfMonth = moment
+    .utc()
+    .year(year)
+    .month(month - 1)
+    .endOf('month')
+    .toDate()
+
+  console.log('startOfMonth: ', startOfMonth)
+  console.log('endOfMonth: ', endOfMonth)
+
+  const self = this
 
   const q = self.model(COLLECTION).countDocuments({
     deleted: false,
-    date: { $gte: startOfMonth, $lte: endOfMonth },
-  });
+    date: { $gte: startOfMonth, $lte: startOfMonth }
+  })
 
   if (callback) {
-    return q.exec(callback);
+    return q.exec(callback)
   }
 
-  return q.exec();
-};
+  return q.exec()
+}
 
-ticketSchema.statics.getTotalTicketsLastMonth = function (callback) {
-  const self = this;
+ticketSchema.statics.getClosedOrRejectedLastMonth = function (payload, callback) {
+  const self = this
 
-  const now = moment();
-  const startOfLastMonth = now.clone().subtract(1, 'month').startOf('month').toDate();
-  const endOfLastMonth = now.clone().subtract(1, 'month').endOf('month').toDate();
+  console.log('getClosedOrRejectedLastMonth payload ', payload)
 
+  const { month, year } = payload
 
-  const q = self.model(COLLECTION).countDocuments({
-    deleted: false,
-    date: { $gte: startOfLastMonth, $lte: endOfLastMonth },
-  });
-
-  if (callback) {
-    return q.exec(callback);
+  if (_.isUndefined(month) || _.isNaN(month) || _.isUndefined(year) || _.isNaN(year)) {
+    throw new Error('Invalid month or year')
   }
 
-  return q.exec();
-};
+  // Определяем начало и конец указанного месяца
+  const startOfMonth = moment
+    .utc()
+    .year(year)
+    .month(month - 1)
+    .startOf('month')
+    .toDate()
+  const endOfMonth = moment
+    .utc()
+    .year(year)
+    .month(month - 1)
+    .endOf('month')
+    .toDate()
 
-ticketSchema.statics.getClosedOrRejectedLastMonth = function (callback) {
-  const self = this;
-
-  const now = moment();
-  const startOfLastMonth = now.clone().subtract(1, 'month').startOf('month').toDate();
-  const endOfLastMonth = now.clone().subtract(1, 'month').endOf('month').toDate();
-
+  console.log('startOfMonth: ', startOfMonth)
+  console.log('endOfMonth: ', endOfMonth)
 
   const q = self.model(COLLECTION).aggregate([
     {
       $match: {
         deleted: false,
-        date: { $gte: startOfLastMonth, $lte: endOfLastMonth },
+        date: { $gte: startOfMonth, $lte: endOfMonth }
       }
     },
     {
       $lookup: {
-        from: "statuses",
-        localField: "status",
-        foreignField: "_id",
-        as: "statusDetails"
+        from: 'statuses',
+        localField: 'status',
+        foreignField: '_id',
+        as: 'statusDetails'
       }
     },
     {
-      $unwind: "$statusDetails"
+      $unwind: '$statusDetails'
     },
     {
       $match: {
-        "statusDetails.name": { $in: ['Closed', 'Rejected'] }
+        'statusDetails.name': { $in: ['Closed', 'Rejected'] }
       }
     },
     {
       $group: {
-        _id: "$statusDetails.name",
+        _id: '$statusDetails.name',
         count: { $sum: 1 }
       }
     }
-  ]);
+  ])
 
   if (callback) {
-    return q.exec(callback);
+    return q.exec(callback)
   }
 
-  return q.exec();
-};
+  return q.exec()
+}
 
+ticketSchema.statics.getTicketsByStatus = function (payload, callback) {
+  const self = this
 
-ticketSchema.statics.getTicketsByStatusLastMonth = function (callback) {
-  const self = this;
+  console.log('getTicketsByStatus payload ', payload)
 
-  const now = moment();
-  const startOfLastMonth = now.clone().subtract(1, 'month').startOf('month').toDate();
-  const endOfLastMonth = now.clone().subtract(1, 'month').endOf('month').toDate();
+  const { month, year } = payload
+
+  if (_.isUndefined(month) || _.isNaN(month) || _.isUndefined(year) || _.isNaN(year)) {
+    throw new Error('Invalid month or year')
+  }
+
+  // Определяем начало и конец указанного месяца
+  const startOfMonth = moment
+    .utc()
+    .year(year)
+    .month(month - 1)
+    .startOf('month')
+    .toDate()
+  const endOfMonth = moment
+    .utc()
+    .year(year)
+    .month(month - 1)
+    .endOf('month')
+    .toDate()
+
+  console.log('startOfMonth: ', startOfMonth)
+  console.log('endOfMonth: ', endOfMonth)
+
+  const q = self.model(COLLECTION).aggregate([
+    {
+      $match: {
+        deleted: false
+      }
+    },
+    {
+      $addFields: {
+        lastHistoryDate: {
+          $arrayElemAt: ['$history.date', -1]
+        }
+      }
+    },
+    {
+      $match: {
+        lastHistoryDate: { $gte: startOfMonth, $lte: endOfMonth }
+      }
+    },
+    {
+      $lookup: {
+        from: 'statuses',
+        localField: 'status',
+        foreignField: '_id',
+        as: 'statusDetails'
+      }
+    },
+    {
+      $unwind: '$statusDetails'
+    },
+    {
+      $group: {
+        _id: '$statusDetails.name',
+        count: { $sum: 1 }
+      }
+    }
+  ])
+
+  if (callback) {
+    return q.exec(callback)
+  }
+
+  return q.exec()
+}
+
+ticketSchema.statics.getTicketsByPriority = function (payload, callback) {
+  const self = this
+
+  console.log('getTicketsByPriority payload ', payload)
+
+  const { month, year } = payload
+
+  if (_.isUndefined(month) || _.isNaN(month) || _.isUndefined(year) || _.isNaN(year)) {
+    throw new Error('Invalid month or year')
+  }
+
+  // Определяем начало и конец указанного месяца
+  const startOfMonth = moment
+    .utc()
+    .year(year)
+    .month(month - 1)
+    .startOf('month')
+    .toDate()
+  const endOfMonth = moment
+    .utc()
+    .year(year)
+    .month(month - 1)
+    .endOf('month')
+    .toDate()
+
+  console.log('startOfMonth: ', startOfMonth)
+  console.log('endOfMonth: ', endOfMonth)
 
   const q = self.model(COLLECTION).aggregate([
     {
       $match: {
         deleted: false,
-        date: { $gte: startOfLastMonth, $lte: endOfLastMonth },
-      },
+        date: { $gte: startOfMonth, $lte: endOfMonth }
+      }
     },
     {
       $lookup: {
-        from: "statuses",
-        localField: "status",
-        foreignField: "_id",
-        as: "statusDetails"
+        from: 'priorities',
+        localField: 'priority',
+        foreignField: '_id',
+        as: 'statusDetails'
       }
     },
     {
-      $unwind: "$statusDetails"
+      $unwind: '$statusDetails'
     },
     {
       $group: {
-        _id: "$statusDetails.name",
+        _id: '$statusDetails.name',
         count: { $sum: 1 }
       }
     }
-  ]);
+  ])
 
   if (callback) {
-    return q.exec(callback);
+    return q.exec(callback)
   }
 
-  return q.exec();
-};
+  return q.exec()
+}
 
-ticketSchema.statics.getAverageResolutionTime = function (callback) {
-  const self = this;
+ticketSchema.statics.getAverageResolutionTime = function (payload, callback) {
+  const { month, year } = payload
+
+  if (_.isUndefined(month) || _.isNaN(month) || _.isUndefined(year) || _.isNaN(year)) {
+    throw new Error('Invalid month or year')
+  }
+
+  // Определяем начало и конец указанного месяца
+  const startOfMonth = moment
+    .utc()
+    .year(year)
+    .month(month - 1)
+    .startOf('month')
+    .toDate()
+  const endOfMonth = moment
+    .utc()
+    .year(year)
+    .month(month - 1)
+    .endOf('month')
+    .toDate()
+
+  const self = this
 
   const q = self.find(
     {
       deleted: false,
-      'history.action': { $in: ['ticket:created', 'ticket:set:status:Resolved', 'ticket:set:status:Rejected'] },
+      date: { $gte: startOfMonth, $lte: endOfMonth },
+      'history.action': { $in: ['ticket:created', 'ticket:set:status:Resolved', 'ticket:set:status:Rejected'] }
     },
     {
-      history: 1,
+      history: 1
     }
-  );
+  )
 
   return q.exec((err, tickets) => {
     if (err) {
-      if (callback) return callback(err);
-      throw err;
+      if (callback) return callback(err)
+      throw err
     }
 
-    const resolutionTimes = [];
+    const resolutionTimes = []
 
     for (const ticket of tickets) {
-      const createdEvent = ticket.history.find((event) => event.action === "ticket:created");
-      const resolvedEvent = ticket.history.find((event) =>
-        ["ticket:set:status:Resolved", "ticket:set:status:Rejected"].includes(event.action)
-      );
+      const createdEvent = ticket.history.find(event => event.action === 'ticket:created')
+      const resolvedEvent = ticket.history.find(event =>
+        ['ticket:set:status:Resolved', 'ticket:set:status:Rejected'].includes(event.action)
+      )
 
-      if (!createdEvent || !resolvedEvent) continue;
+      if (!createdEvent || !resolvedEvent) continue
 
-      const createdDate = moment(createdEvent.date);
-      const resolvedDate = moment(resolvedEvent.date);
+      const createdDate = moment(createdEvent.date)
+      const resolvedDate = moment(resolvedEvent.date)
 
-      const diffInMinutes = resolvedDate.diff(createdDate, "minutes");
-      resolutionTimes.push(diffInMinutes);
+      const diffInMinutes = resolvedDate.diff(createdDate, 'minutes')
+      resolutionTimes.push(diffInMinutes)
     }
 
-    const totalResolutionTime = resolutionTimes.reduce((sum, time) => sum + time, 0);
-    const avgResolutionTime = Math.round(totalResolutionTime / (resolutionTimes.length || 1));
+    const totalResolutionTime = resolutionTimes.reduce((sum, time) => sum + time, 0)
+    const avgResolutionTimeInMinutes = totalResolutionTime / (resolutionTimes.length || 1)
+    const avgResolutionTimeInHours = (avgResolutionTimeInMinutes / 60).toFixed(2)
 
-  const result = {
-      avgResolutionTimeInMinutes: avgResolutionTime,
-      totalTickets: resolutionTimes.length,
-    };
+    const result = {
+      avgResolutionTimeInHours,
+      totalTickets: resolutionTimes.length
+    }
 
-    if (callback) return callback(null, result);
-    return result;
-  });
-};
-
+    if (callback) return callback(null, result)
+    return result
+  })
+}
 
 module.exports = mongoose.model(COLLECTION, ticketSchema)

@@ -31,12 +31,16 @@ export default function D3Pie (props) {
         },
         donut: {
           label: {
-            format: () => ''
+            format: (value, ratio, id) => `${id}: ${'value'}`
           }
         }
       })
     }
   }, [pieChart.current, props.data])
+
+  if (!props.data.length > 0) {
+    return <div style={{ textAlign: 'center', padding: '20px' }}></div>
+  }
 
   return (
     <div>

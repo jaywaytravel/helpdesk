@@ -1535,13 +1535,21 @@ apiTickets.deletePriority = function (req, res) {
  * @apiError InvalidRequest Invalid Post Data
  *
  */
+
 apiTickets.getTicketStats = function (req, res) {
-  let timespan = 30
-  if (req.params.timespan) {
-    timespan = parseInt(req.params.timespan)
+  const timespan = {
+    year: req.query.year,
+    month: req.query.month
   }
 
   const cache = global.cache
+
+  // cache.set('testKey', 'testValue', 60)
+  // console.log('Cache set:', cache.get('testKey'))
+
+  // setTimeout(() => {
+  //   console.log('Cache after timeout:', cache.get('testKey'))
+  // }, 5000)
 
   if (_.isUndefined(cache)) {
     return res.status(400).send('Ticket stats are still loading...')
@@ -1549,9 +1557,12 @@ apiTickets.getTicketStats = function (req, res) {
 
   const obj = {}
 
+  // console.log('timespan ', timespan)
+
   switch (timespan) {
     case 30:
       obj.data = cache.get('tickets:overview:e30:graphData')
+
       obj.ticketCount = cache.get('tickets:overview:e30:ticketCount')
       obj.closedCount = cache.get('tickets:overview:e30:closedTickets')
       obj.ticketAvg = cache.get('tickets:overview:e30:responseTime')
@@ -1603,6 +1614,7 @@ apiTickets.getTicketStats = function (req, res) {
     const tz = context.data.settings.timezone.value
     obj.lastUpdated = moment.utc(obj.lastUpdated).tz(tz).format('MM-DD-YYYY hh:mm:ssa')
 
+    // console.log('obj: ', obj)
     return res.send(obj)
   })
   // return res.send(obj);
@@ -2113,67 +2125,89 @@ apiTickets.restoreDeleted = function (req, res) {
 
 apiTickets.getCountByType = function (req, res) {
   const ticketModel = require('../../../models/ticket')
-  
+  const timespan = {
+    year: req.query.year,
+    month: req.query.month
+  }
 
-  ticketModel.getCountByType(function (err, response) {
+  ticketModel.getCountByType(timespan, function (err, response) {
     if (err) return res.status(400).json({ error: 'Invalid Request' })
     return res.json({ ...response })
   })
 }
 
+apiTickets.getTopTicketGroups = function (req, res) {
+  const ticketModel = require('../../../models/ticket')
+  const top = req.params.top
+  const timespan = req.params.timespan
+
+  ticketModel.getTopTicketGroups(timespan, top, function (err, items) {
+    if (err) return res.status(400).json({ error: 'Invalid Request' })
+
+    return res.json({ items })
+  })
+}
 apiTickets.getTotalTicketsThisMonth = function (req, res) {
   const ticketModel = require('../../../models/ticket')
+  const timespan = {
+    year: req.query.year,
+    month: req.query.month
+  }
 
+  console.log('params : ', req.query)
 
-  ticketModel.getTotalTicketsThisMonth(function (err, count) {
+  console.log('zzzzzzz ', timespan)
+
+  ticketModel.getTotalTicketsThisMonth(timespan, function (err, count) {
+    console.log('ttttttt : ', count)
+
     if (err) return res.status(400).json({ error: 'Invalid Request' })
-      res.json({ count })
+    res.json({ count })
   })
 }
 
-apiTickets.getTotalTicketsLastMonth = function (req, res) {
+apiTickets.getTicketsByStatus = function (req, res) {
   const ticketModel = require('../../../models/ticket')
 
-  ticketModel.getTotalTicketsLastMonth(function (err, count) {
+  const timespan = {
+    year: req.query.year,
+    month: req.query.month
+  }
+
+  ticketModel.getTicketsByStatus(timespan, function (err, response) {
     if (err) return res.status(400).json({ error: 'Invalid Request' })
 
-      res.json({ count })
-  })
-}
-
-apiTickets.getClosedOrRejectedLastMonth = function (req, res) {
-  const ticketModel = require('../../../models/ticket')
-
-  ticketModel.getClosedOrRejectedLastMonth(function (err, response) {
-    if (err) return res.status(400).json({ error: 'Invalid Request' })
-      res.json({ ...response })
-  })
-}
-
-apiTickets.getTicketsByStatusLastMonth = function (req, res) {
-  const ticketModel = require('../../../models/ticket')
-
-  ticketModel.getTicketsByStatusLastMonth(function (err, response) {
-    if (err) return res.status(400).json({ error: 'Invalid Request' })
-
-      res.json({ ...response })
+    res.json({ ...response })
   })
 }
 
 apiTickets.getAverageResolutionTime = function (req, res) {
   const ticketModel = require('../../../models/ticket')
 
-  ticketModel.getAverageResolutionTime(function (err, response) {
+  const timespan = {
+    year: req.query.year,
+    month: req.query.month
+  }
+
+  ticketModel.getAverageResolutionTime(timespan, function (err, response) {
     if (err) return res.status(400).json({ error: 'Invalid Request' })
 
-      const tvt = moment.duration(response.avgResolutionTimeInMinutes, 'minutes').asHours()
-      const upd = {
-        avgResolutionTime: Math.floor(tvt),
-        totalTickets: response.totalTickets
+    res.json({ ...response })
+  })
+}
 
-      }
+apiTickets.getTicketsByPriority = function (req, res) {
+  const ticketModel = require('../../../models/ticket')
 
-      res.json({ ...upd })
+  const timespan = {
+    year: req.query.year,
+    month: req.query.month
+  }
+
+  ticketModel.getTicketsByPriority(timespan, function (err, response) {
+    if (err) return res.status(400).json({ error: 'Invalid Request' })
+
+    res.json({ ...response })
   })
 }
 

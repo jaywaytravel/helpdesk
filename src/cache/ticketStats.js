@@ -26,10 +26,7 @@ function buildGraphData (arr, days, callback) {
   if (arr.length < 1) {
     return callback(graphData)
   }
-  const today = moment()
-    .hour(23)
-    .minute(59)
-    .second(59)
+  const today = moment().hour(23).minute(59).second(59)
   const timespanArray = []
   for (let i = days; i--; ) {
     timespanArray.push(i)
@@ -94,10 +91,7 @@ const init = function (tickets, callback) {
   ex.e365 = {}
   ex.lifetime = {}
   ex.lastUpdated = moment.utc()
-  const today = moment()
-    .hour(23)
-    .minute(59)
-    .second(59)
+  const today = moment().hour(23).minute(59).second(59)
   const e30 = today.clone().subtract(30, 'd')
   const e60 = today.clone().subtract(60, 'd')
   const e90 = today.clone().subtract(90, 'd')
@@ -269,6 +263,9 @@ const init = function (tickets, callback) {
     ],
     function (err) {
       $tickets = null
+
+      // console.log('ticketStats  ex ::: ', ex)
+
       return callback(err, ex)
     }
   )

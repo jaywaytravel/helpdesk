@@ -22,17 +22,16 @@ import {
   FETCH_DASHBOARD_TOP_GROUPS,
   FETCH_DASHBOARD_TOP_TAGS,
   FETCH_COUNT_BY_TYPE,
-  FETCH_TOTAL_TICKETS_THIS_MONTH,
-  FETCH_TOTAL_TICKETS_LAST_MONTH,
-  FETCH_CLOSED_OR_REJECTED_LAST_MONTH,
-  FETCH_TICKETS_BY_STATUS_LAST_MONTH,
+  FETCH_TOTAL_TICKETS_COUNT,
+  FETCH_TICKET_STATUSES,
+  FETCH_TICKETS_BY_PRIORITY,
   FETCH_AVERAGE_RESOLUTION_TIME
 } from 'actions/types'
 
 import Log from '../../logger'
 import helpers from 'lib/helpers'
 
-function * fetchDashboardData ({ payload, meta }) {
+function* fetchDashboardData ({ payload, meta }) {
   yield put({ type: FETCH_DASHBOARD_DATA.PENDING })
   try {
     const response = yield call(api.dashboard.getData, payload)
@@ -48,7 +47,7 @@ function * fetchDashboardData ({ payload, meta }) {
   }
 }
 
-function * fetchDashboardTopGroups ({ payload }) {
+function* fetchDashboardTopGroups ({ payload }) {
   yield put({ type: FETCH_DASHBOARD_TOP_GROUPS.PENDING })
   try {
     const response = yield call(api.dashboard.getTopGroups, payload)
@@ -64,10 +63,10 @@ function * fetchDashboardTopGroups ({ payload }) {
   }
 }
 
-function * fetchCountByType () {
+function* fetchCountByType ({ payload }) {
   yield put({ type: FETCH_COUNT_BY_TYPE.PENDING })
   try {
-    const response = yield call(api.dashboard.getCountByType)
+    const response = yield call(api.dashboard.getCountByType, payload)
     yield put({ type: FETCH_COUNT_BY_TYPE.SUCCESS, response })
   } catch (error) {
     const errorText = error.response ? error.response.data.error : error
@@ -80,11 +79,14 @@ function * fetchCountByType () {
   }
 }
 
-function * fetchTotalTicketsThisMonth () {
-  yield put({ type: FETCH_TOTAL_TICKETS_THIS_MONTH.PENDING })
+function* fetchTotalTicketsCount ({ payload, meta }) {
+  yield put({ type: FETCH_TOTAL_TICKETS_COUNT.PENDING })
+
+  console.log('payload ::::::: ', payload)
+
   try {
-    const response = yield call(api.dashboard.getTotalTicketsThisMonth)
-    yield put({ type: FETCH_TOTAL_TICKETS_THIS_MONTH.SUCCESS, response })
+    const response = yield call(api.dashboard.getTotalTicketsThisMonth, payload)
+    yield put({ type: FETCH_TOTAL_TICKETS_COUNT.SUCCESS, response, meta })
   } catch (error) {
     const errorText = error.response ? error.response.data.error : error
     if (error.response && error.response.status !== (401 || 403)) {
@@ -92,15 +94,15 @@ function * fetchTotalTicketsThisMonth () {
       helpers.UI.showSnackbar(`Error: ${errorText}`, true)
     }
 
-    yield put({ type: FETCH_TOTAL_TICKETS_THIS_MONTH.ERROR, error })
+    yield put({ type: FETCH_TOTAL_TICKETS_COUNT.ERROR, error })
   }
 }
 
-function * fetchTotalTicketsLastMonth () {
-  yield put({ type: FETCH_TOTAL_TICKETS_LAST_MONTH.PENDING })
+function* fetchTicketsByStatus ({ payload }) {
+  yield put({ type: FETCH_TICKET_STATUSES.PENDING })
   try {
-    const response = yield call(api.dashboard.getTotalTicketsLastMonth)
-    yield put({ type: FETCH_TOTAL_TICKETS_LAST_MONTH.SUCCESS, response })
+    const response = yield call(api.dashboard.getTicketsByStatus, payload)
+    yield put({ type: FETCH_TICKET_STATUSES.SUCCESS, response })
   } catch (error) {
     const errorText = error.response ? error.response.data.error : error
     if (error.response && error.response.status !== (401 || 403)) {
@@ -108,15 +110,15 @@ function * fetchTotalTicketsLastMonth () {
       helpers.UI.showSnackbar(`Error: ${errorText}`, true)
     }
 
-    yield put({ type: FETCH_TOTAL_TICKETS_LAST_MONTH.ERROR, error })
+    yield put({ type: FETCH_TICKET_STATUSES.ERROR, error })
   }
 }
 
-function * fetchClosedOrRejectedLastMonth () {
-  yield put({ type: FETCH_CLOSED_OR_REJECTED_LAST_MONTH.PENDING })
+function* fetchTicketsByPriority ({ payload }) {
+  yield put({ type: FETCH_TICKETS_BY_PRIORITY.PENDING })
   try {
-    const response = yield call(api.dashboard.getClosedOrRejectedLastMonth)
-    yield put({ type: FETCH_CLOSED_OR_REJECTED_LAST_MONTH.SUCCESS, response })
+    const response = yield call(api.dashboard.getTicketsByPriority, payload)
+    yield put({ type: FETCH_TICKETS_BY_PRIORITY.SUCCESS, response })
   } catch (error) {
     const errorText = error.response ? error.response.data.error : error
     if (error.response && error.response.status !== (401 || 403)) {
@@ -124,30 +126,14 @@ function * fetchClosedOrRejectedLastMonth () {
       helpers.UI.showSnackbar(`Error: ${errorText}`, true)
     }
 
-    yield put({ type: FETCH_CLOSED_OR_REJECTED_LAST_MONTH.ERROR, error })
+    yield put({ type: FETCH_TICKETS_BY_PRIORITY.ERROR, error })
   }
 }
 
-function * fetchTicketsByStatusLastMonth () {
-  yield put({ type: FETCH_TICKETS_BY_STATUS_LAST_MONTH.PENDING })
-  try {
-    const response = yield call(api.dashboard.getTicketsByStatusLastMonth)
-    yield put({ type: FETCH_TICKETS_BY_STATUS_LAST_MONTH.SUCCESS, response })
-  } catch (error) {
-    const errorText = error.response ? error.response.data.error : error
-    if (error.response && error.response.status !== (401 || 403)) {
-      Log.error(errorText, error)
-      helpers.UI.showSnackbar(`Error: ${errorText}`, true)
-    }
-
-    yield put({ type: FETCH_TICKETS_BY_STATUS_LAST_MONTH.ERROR, error })
-  }
-}
-
-function * fetchAverageResolutionTime () {
+function* fetchAverageResolutionTime ({ payload }) {
   yield put({ type: FETCH_AVERAGE_RESOLUTION_TIME.PENDING })
   try {
-    const response = yield call(api.dashboard.getAverageResolutionTime)
+    const response = yield call(api.dashboard.getAverageResolutionTime, payload)
     yield put({ type: FETCH_AVERAGE_RESOLUTION_TIME.SUCCESS, response })
   } catch (error) {
     const errorText = error.response ? error.response.data.error : error
@@ -160,8 +146,7 @@ function * fetchAverageResolutionTime () {
   }
 }
 
-
-function * fetchDashboardTopTags ({ payload }) {
+function* fetchDashboardTopTags ({ payload }) {
   yield put({ type: FETCH_DASHBOARD_TOP_TAGS.PENDING })
   try {
     const response = yield call(api.dashboard.getTopTags, payload)
@@ -177,7 +162,7 @@ function * fetchDashboardTopTags ({ payload }) {
   }
 }
 
-function * fetchDashboardOverdueTickets ({ payload }) {
+function* fetchDashboardOverdueTickets ({ payload }) {
   yield put({ type: FETCH_DASHBOARD_OVERDUE_TICKETS.PENDING })
   try {
     const response = yield call(api.dashboard.getOverdueTickets, payload)
@@ -193,15 +178,14 @@ function * fetchDashboardOverdueTickets ({ payload }) {
   }
 }
 
-export default function * watcher () {
+export default function* watcher () {
   yield takeLatest(FETCH_DASHBOARD_DATA.ACTION, fetchDashboardData)
   yield takeLatest(FETCH_DASHBOARD_TOP_GROUPS.ACTION, fetchDashboardTopGroups)
   yield takeLatest(FETCH_DASHBOARD_TOP_TAGS.ACTION, fetchDashboardTopTags)
   yield takeLatest(FETCH_DASHBOARD_OVERDUE_TICKETS.ACTION, fetchDashboardOverdueTickets)
   yield takeLatest(FETCH_COUNT_BY_TYPE.ACTION, fetchCountByType)
-  yield takeLatest(FETCH_TOTAL_TICKETS_THIS_MONTH.ACTION, fetchTotalTicketsThisMonth)
-  yield takeLatest(FETCH_TOTAL_TICKETS_LAST_MONTH.ACTION, fetchTotalTicketsLastMonth)
-  yield takeLatest(FETCH_CLOSED_OR_REJECTED_LAST_MONTH.ACTION, fetchClosedOrRejectedLastMonth)
-  yield takeLatest(FETCH_TICKETS_BY_STATUS_LAST_MONTH.ACTION, fetchTicketsByStatusLastMonth)
+  yield takeLatest(FETCH_TOTAL_TICKETS_COUNT.ACTION, fetchTotalTicketsCount)
+  yield takeLatest(FETCH_TICKETS_BY_PRIORITY.ACTION, fetchTicketsByPriority)
+  yield takeLatest(FETCH_TICKET_STATUSES.ACTION, fetchTicketsByStatus)
   yield takeLatest(FETCH_AVERAGE_RESOLUTION_TIME.ACTION, fetchAverageResolutionTime)
 }

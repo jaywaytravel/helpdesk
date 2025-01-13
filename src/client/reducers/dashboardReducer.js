@@ -21,11 +21,10 @@ import {
   FETCH_DASHBOARD_TOP_GROUPS,
   FETCH_DASHBOARD_TOP_TAGS,
   FETCH_COUNT_BY_TYPE,
-  FETCH_TOTAL_TICKETS_THIS_MONTH,
-  FETCH_TOTAL_TICKETS_LAST_MONTH,
-  FETCH_CLOSED_OR_REJECTED_LAST_MONTH,
-  FETCH_TICKETS_BY_STATUS_LAST_MONTH,
-  FETCH_AVERAGE_RESOLUTION_TIME
+  FETCH_TOTAL_TICKETS_COUNT,
+  FETCH_TICKET_STATUSES,
+  FETCH_AVERAGE_RESOLUTION_TIME,
+  FETCH_TICKETS_BY_PRIORITY
 } from 'actions/types'
 
 const initialState = {
@@ -39,10 +38,9 @@ const initialState = {
   ticketAvg: null,
   ticketCount: 0,
   closedCount: 0,
-  totalTicketsThisMonth: 0,
-  totalTicketsLastMonth: 0,
 
-  avgResolutionTime: null,
+  totalTicketsCount: 0,
+  avgResolutionTimeInHours: null,
 
   loadingTopGroups: false,
   topGroups: List([]),
@@ -53,15 +51,14 @@ const initialState = {
   loadingOverdueTickets: false,
   overdueTickets: List([]),
 
-  
-  closedOrRejectedLastMonth: List([]),
-  loadingClosedOrRejectedLastMonth: false,
+  ticketsByPriority: List([]),
+  loadingTicketsByPriority: false,
 
-  ticketsByStatusLastMonth: List([]),
-  loadingTicketsByStatusLastMonth: false,
-  
+  ticketsByStatus: List([]),
+  loadingTicketsByStatus: false,
+
   countByType: List([]),
-  loadingCountByType: false,
+  loadingCountByType: false
 }
 
 const reducer = handleActions(
@@ -71,6 +68,8 @@ const reducer = handleActions(
     },
 
     [FETCH_DASHBOARD_DATA.SUCCESS]: (state, action) => {
+      console.log('action.response: ', action.response)
+
       return {
         ...state,
         tickets: fromJS(action.response.tickets),
@@ -89,8 +88,8 @@ const reducer = handleActions(
 
     [FETCH_DASHBOARD_TOP_GROUPS.PENDING]: state => {
       return {
-        ...state, 
-        loadingTopGroups: true 
+        ...state,
+        loadingTopGroups: true
       }
     },
 
@@ -150,55 +149,43 @@ const reducer = handleActions(
     },
 
     [FETCH_COUNT_BY_TYPE.SUCCESS]: (state, action) => {
-      let result = sortBy(action.response, i => i.count)
-        .reverse()
+      let result = sortBy(action.response, i => i.count).reverse()
 
       result = map(result, v => [v._id, v.count])
 
       return { ...state, loadingCountByType: false, countByType: fromJS(result) }
     },
 
-    [FETCH_TOTAL_TICKETS_THIS_MONTH.PENDING]: state => {
+    [FETCH_TOTAL_TICKETS_COUNT.PENDING]: state => {
       return { ...state, loading: true }
     },
 
-    [FETCH_TOTAL_TICKETS_THIS_MONTH.SUCCESS]: (state, action) => {
-      return { ...state, totalTicketsThisMonth: action.response.count }
+    [FETCH_TOTAL_TICKETS_COUNT.SUCCESS]: (state, action) => {
+      return { ...state, totalTicketsCount: action.response.count }
     },
 
-    [FETCH_TOTAL_TICKETS_LAST_MONTH.PENDING]: state => {
-      return { ...state, loading: true }
+    [FETCH_TICKET_STATUSES.PENDING]: state => {
+      return { ...state, loadingTicketsByStatus: true }
     },
 
-    [FETCH_TOTAL_TICKETS_LAST_MONTH.SUCCESS]: (state, action) => {
-      return { ...state, totalTicketsLastMonth: action.response.count }
-    },
-
-    [FETCH_CLOSED_OR_REJECTED_LAST_MONTH.PENDING]: state => {
-      return { ...state, loadingClosedOrRejectedLastMonth: true }
-    },
-
-    [FETCH_CLOSED_OR_REJECTED_LAST_MONTH.SUCCESS]: (state, action) => {
-      let result = sortBy(action.response, i => i.count)
-        .reverse()
+    [FETCH_TICKET_STATUSES.SUCCESS]: (state, action) => {
+      let result = sortBy(action.response, i => i.count).reverse()
 
       result = map(result, v => [v._id, v.count])
 
-      return { ...state, loadingClosedOrRejectedLastMonth: false, closedOrRejectedLastMonth: fromJS(result) }
+      return { ...state, loadingTicketsByStatus: false, ticketsByStatus: fromJS(result) }
     },
 
-    [FETCH_TICKETS_BY_STATUS_LAST_MONTH.PENDING]: state => {
-      return { ...state, loadingTicketsByStatusLastMonth: true }
+    [FETCH_TICKETS_BY_PRIORITY.PENDING]: state => {
+      return { ...state, loadingTicketsByPriority: true }
     },
 
-    [FETCH_TICKETS_BY_STATUS_LAST_MONTH.SUCCESS]: (state, action) => {
-      let result = sortBy(action.response, i => i.count)
-        .reverse()
+    [FETCH_TICKETS_BY_PRIORITY.SUCCESS]: (state, action) => {
+      let result = sortBy(action.response, i => i.count).reverse()
 
       result = map(result, v => [v._id, v.count])
 
-
-      return { ...state, loadingTicketsByStatusLastMonth: false, ticketsByStatusLastMonth: fromJS(result) }
+      return { ...state, loadingTicketsByPriority: false, ticketsByPriority: fromJS(result) }
     },
 
     [FETCH_AVERAGE_RESOLUTION_TIME.PENDING]: state => {
@@ -206,8 +193,8 @@ const reducer = handleActions(
     },
 
     [FETCH_AVERAGE_RESOLUTION_TIME.SUCCESS]: (state, action) => {
-      return { ...state, avgResolutionTime: action.response.avgResolutionTime }
-    },
+      return { ...state, avgResolutionTimeInHours: action.response.avgResolutionTimeInHours }
+    }
   },
   initialState
 )

@@ -92,6 +92,7 @@ truCache.refreshCache = function (callback) {
                 cache.set('tickets:overview:e30:closedTickets', stats.e30.closedTickets, expire)
                 cache.set('tickets:overview:e30:responseTime', stats.e30.avgResponse, expire)
                 cache.set('tickets:overview:e30:graphData', stats.e30.graphData, expire)
+                // console.log('stats.e30.graphData : ', stats.e30.graphData)
 
                 cache.set('tickets:overview:e60:ticketCount', stats.e60.tickets, expire)
                 cache.set('tickets:overview:e60:closedTickets', stats.e60.closedTickets, expire)
@@ -204,7 +205,7 @@ truCache.refreshCache = function (callback) {
     function (err) {
       if (err) return winston.warn(err)
       // Send to parent
-      process.send({ cache: cache })
+      process.send({ cache })
 
       cache.flushAll()
 

@@ -19,11 +19,10 @@ import {
   FETCH_DASHBOARD_TOP_TAGS,
   FETCH_DASHBOARD_OVERDUE_TICKETS,
   FETCH_COUNT_BY_TYPE,
-  FETCH_TOTAL_TICKETS_THIS_MONTH,
-  FETCH_TOTAL_TICKETS_LAST_MONTH,
-  FETCH_CLOSED_OR_REJECTED_LAST_MONTH,
-  FETCH_TICKETS_BY_STATUS_LAST_MONTH,
-  FETCH_AVERAGE_RESOLUTION_TIME
+  FETCH_TICKETS_BY_PRIORITY,
+  FETCH_AVERAGE_RESOLUTION_TIME,
+  FETCH_TICKET_STATUSES,
+  FETCH_TOTAL_TICKETS_COUNT
 } from 'actions/types'
 
 export const fetchDashboardData = createAction(
@@ -36,11 +35,9 @@ export const fetchDashboardTopGroups = createAction(FETCH_DASHBOARD_TOP_GROUPS.A
 export const fetchDashboardTopTags = createAction(FETCH_DASHBOARD_TOP_TAGS.ACTION, payload => payload)
 export const fetchDashboardOverdueTickets = createAction(FETCH_DASHBOARD_OVERDUE_TICKETS.ACTION)
 
-
 export const fetchCountByType = createAction(FETCH_COUNT_BY_TYPE.ACTION)
-export const fetchTicketsByStatusLastMonth = createAction(FETCH_TICKETS_BY_STATUS_LAST_MONTH.ACTION)
+export const fetchTicketsByPriority = createAction(FETCH_TICKETS_BY_PRIORITY.ACTION)
 
-export const fetchTotalTicketsThisMonth = createAction(FETCH_TOTAL_TICKETS_THIS_MONTH.ACTION)
-export const fetchTotalTicketsLastMonth = createAction(FETCH_TOTAL_TICKETS_LAST_MONTH.ACTION)
-export const fetchClosedOrRejectedLastMonth = createAction(FETCH_CLOSED_OR_REJECTED_LAST_MONTH.ACTION)
+export const fetchTicketsByStatus = createAction(FETCH_TICKET_STATUSES.ACTION)
+export const fetchTotalTicketsCount = createAction(FETCH_TOTAL_TICKETS_COUNT.ACTION)
 export const fetchAverageResolutionTime = createAction(FETCH_AVERAGE_RESOLUTION_TIME.ACTION)
