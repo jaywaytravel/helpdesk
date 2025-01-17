@@ -72,9 +72,12 @@ module.exports = function (middleware, router, controllers) {
 
   router.get('/api/v1/tickets/count/bytypes', apiv1, apiCtrl.tickets.getCountByType)
   router.get('/api/v1/tickets/count', apiv1, apiCtrl.tickets.getTotalTicketsThisMonth)
-  router.get('/api/v1/tickets/count/status', apiv1, apiCtrl.tickets.getTicketsByStatus)
+  router.get('/api/v1/tickets/count/bystatus', apiv1, apiCtrl.tickets.getTicketsByStatus)
   router.get('/api/v1/tickets/count/priority', apiv1, apiCtrl.tickets.getTicketsByPriority)
+  router.get('/api/v1/tickets/count/group', apiv1, apiCtrl.tickets.getTicketsByGroup)
   router.get('/api/v1/tickets/average-resolution-time', apiv1, apiCtrl.tickets.getAverageResolutionTime)
+  router.get('/api/v1/tickets/count/last-month', apiv1, apiCtrl.tickets.getTotalTicketsLastMonth)
+  router.get('/api/v1/tickets/count/closed-rejected', apiv1, apiCtrl.tickets.getClosedOrRejected)
 
   router.get('/api/v1/tickets/count/days', apiv1, apiCtrl.tickets.getTicketStats)
   router.get('/api/v1/tickets/count/days/:timespan', apiv1, apiCtrl.tickets.getTicketStats)

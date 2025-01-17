@@ -19,12 +19,15 @@ import {
   FETCH_DASHBOARD_DATA,
   FETCH_DASHBOARD_OVERDUE_TICKETS,
   FETCH_DASHBOARD_TICKETS,
+  FETCH_CLOSED_OR_REJECTED,
+  FETCH_TOTAL_TICKETS_LAST_MONTH,
   FETCH_DASHBOARD_TOP_GROUPS,
   FETCH_DASHBOARD_TOP_TAGS,
   FETCH_COUNT_BY_TYPE,
   FETCH_TOTAL_TICKETS_COUNT,
   FETCH_TICKET_STATUSES,
   FETCH_TICKETS_BY_PRIORITY,
+  FETCH_TICKETS_BY_GROUP,
   FETCH_AVERAGE_RESOLUTION_TIME
 } from 'actions/types'
 
@@ -82,8 +85,6 @@ function* fetchCountByType ({ payload }) {
 function* fetchTotalTicketsCount ({ payload, meta }) {
   yield put({ type: FETCH_TOTAL_TICKETS_COUNT.PENDING })
 
-  console.log('payload ::::::: ', payload)
-
   try {
     const response = yield call(api.dashboard.getTotalTicketsThisMonth, payload)
     yield put({ type: FETCH_TOTAL_TICKETS_COUNT.SUCCESS, response, meta })
@@ -98,10 +99,42 @@ function* fetchTotalTicketsCount ({ payload, meta }) {
   }
 }
 
-function* fetchTicketsByStatus ({ payload }) {
+function* fetchTotalTicketsLastMonth () {
+  yield put({ type: FETCH_TOTAL_TICKETS_LAST_MONTH.PENDING })
+  try {
+    const response = yield call(api.dashboard.getTotalTicketsLastMonth)
+    yield put({ type: FETCH_TOTAL_TICKETS_LAST_MONTH.SUCCESS, response })
+  } catch (error) {
+    const errorText = error.response ? error.response.data.error : error
+    if (error.response && error.response.status !== (401 || 403)) {
+      Log.error(errorText, error)
+      helpers.UI.showSnackbar(`Error: ${errorText}`, true)
+    }
+
+    yield put({ type: FETCH_TOTAL_TICKETS_LAST_MONTH.ERROR, error })
+  }
+}
+
+function* fetchClosedOrRejected ({ payload }) {
+  yield put({ type: FETCH_CLOSED_OR_REJECTED.PENDING })
+  try {
+    const response = yield call(api.dashboard.getClosedOrRejected, payload)
+    yield put({ type: FETCH_CLOSED_OR_REJECTED.SUCCESS, response })
+  } catch (error) {
+    const errorText = error.response ? error.response.data.error : error
+    if (error.response && error.response.status !== (401 || 403)) {
+      Log.error(errorText, error)
+      helpers.UI.showSnackbar(`Error: ${errorText}`, true)
+    }
+
+    yield put({ type: FETCH_CLOSED_OR_REJECTED.ERROR, error })
+  }
+}
+
+function* fetchTicketsByStatus () {
   yield put({ type: FETCH_TICKET_STATUSES.PENDING })
   try {
-    const response = yield call(api.dashboard.getTicketsByStatus, payload)
+    const response = yield call(api.dashboard.getTicketsByStatus)
     yield put({ type: FETCH_TICKET_STATUSES.SUCCESS, response })
   } catch (error) {
     const errorText = error.response ? error.response.data.error : error
@@ -127,6 +160,22 @@ function* fetchTicketsByPriority ({ payload }) {
     }
 
     yield put({ type: FETCH_TICKETS_BY_PRIORITY.ERROR, error })
+  }
+}
+
+function* getTicketsByGroup ({ payload }) {
+  yield put({ type: FETCH_TICKETS_BY_GROUP.PENDING })
+  try {
+    const response = yield call(api.dashboard.getTicketsByGroup, payload)
+    yield put({ type: FETCH_TICKETS_BY_GROUP.SUCCESS, response })
+  } catch (error) {
+    const errorText = error.response ? error.response.data.error : error
+    if (error.response && error.response.status !== (401 || 403)) {
+      Log.error(errorText, error)
+      helpers.UI.showSnackbar(`Error: ${errorText}`, true)
+    }
+
+    yield put({ type: FETCH_TICKETS_BY_GROUP.ERROR, error })
   }
 }
 
@@ -185,7 +234,10 @@ export default function* watcher () {
   yield takeLatest(FETCH_DASHBOARD_OVERDUE_TICKETS.ACTION, fetchDashboardOverdueTickets)
   yield takeLatest(FETCH_COUNT_BY_TYPE.ACTION, fetchCountByType)
   yield takeLatest(FETCH_TOTAL_TICKETS_COUNT.ACTION, fetchTotalTicketsCount)
+  yield takeLatest(FETCH_TOTAL_TICKETS_LAST_MONTH.ACTION, fetchTotalTicketsLastMonth)
+  yield takeLatest(FETCH_CLOSED_OR_REJECTED.ACTION, fetchClosedOrRejected)
   yield takeLatest(FETCH_TICKETS_BY_PRIORITY.ACTION, fetchTicketsByPriority)
+  yield takeLatest(FETCH_TICKETS_BY_GROUP.ACTION, getTicketsByGroup)
   yield takeLatest(FETCH_TICKET_STATUSES.ACTION, fetchTicketsByStatus)
   yield takeLatest(FETCH_AVERAGE_RESOLUTION_TIME.ACTION, fetchAverageResolutionTime)
 }

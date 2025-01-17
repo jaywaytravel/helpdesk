@@ -46,14 +46,29 @@ api.dashboard.getTotalTicketsThisMonth = payload => {
   return axios.get(`/api/v1/tickets/count?year=${timespan.year}&month=${timespan.month}`).then(res => res.data)
 }
 
+api.dashboard.getTotalTicketsLastMonth = () => {
+  return axios.get('/api/v1/tickets/count/last-month').then(res => res.data)
+}
+
+api.dashboard.getClosedOrRejected = payload => {
+  const timespan = payload.timespan
+  return axios
+    .get(`/api/v1/tickets/count/closed-rejected?year=${timespan.year}&month=${timespan.month}`)
+    .then(res => res.data)
+}
+
 api.dashboard.getTicketsByPriority = payload => {
   const timespan = payload.timespan
   return axios.get(`/api/v1/tickets/count/priority?year=${timespan.year}&month=${timespan.month}`).then(res => res.data)
 }
 
-api.dashboard.getTicketsByStatus = payload => {
+api.dashboard.getTicketsByGroup = payload => {
   const timespan = payload.timespan
-  return axios.get(`/api/v1/tickets/count/status?year=${timespan.year}&month=${timespan.month}`).then(res => res.data)
+  return axios.get(`/api/v1/tickets/count/group?year=${timespan.year}&month=${timespan.month}`).then(res => res.data)
+}
+
+api.dashboard.getTicketsByStatus = () => {
+  return axios.get(`/api/v1/tickets/count/bystatus`).then(res => res.data)
 }
 
 api.dashboard.getAverageResolutionTime = payload => {

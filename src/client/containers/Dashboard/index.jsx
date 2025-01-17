@@ -13,7 +13,10 @@ import {
   fetchTotalTicketsCount,
   fetchTicketsByPriority,
   fetchTicketsByStatus,
-  fetchAverageResolutionTime
+  fetchAverageResolutionTime,
+  fetchTicketsByGroup,
+  fetchTotalTicketsLastMonth,
+  fetchClosedOrRejected
 } from 'actions/dashboard'
 
 import Grid from 'components/Grid'
@@ -52,11 +55,14 @@ class DashboardContainer extends React.Component {
     this.props.fetchDashboardOverdueTickets()
 
     this.props.fetchCountByType({ timespan: this.timespan })
+    this.props.fetchTotalTicketsLastMonth()
+    this.props.fetchClosedOrRejected({ timespan: this.timespan })
     this.props.fetchTotalTicketsCount({ timespan: this.timespan })
-    // this.props.fetchTotalTicketsLastMonth()
+
     this.props.fetchTicketsByStatus({ timespan: this.timespan })
 
     this.props.fetchTicketsByPriority({ timespan: this.timespan })
+    this.props.fetchTicketsByGroup({ timespan: this.timespan })
 
     this.props.fetchAverageResolutionTime({ timespan: this.timespan })
   }
@@ -65,6 +71,20 @@ class DashboardContainer extends React.Component {
     e.preventDefault()
 
     this.timespan.year = e.target.value
+
+    this.props.fetchClosedOrRejected({
+      timespan: {
+        month: this.timespan.month,
+        year: e.target.value
+      }
+    })
+
+    this.props.fetchTicketsByGroup({
+      timespan: {
+        month: this.timespan.month,
+        year: e.target.value
+      }
+    })
 
     this.props.fetchCountByType({
       timespan: {
@@ -81,13 +101,6 @@ class DashboardContainer extends React.Component {
     })
 
     this.props.fetchTicketsByPriority({
-      timespan: {
-        month: this.timespan.month,
-        year: e.target.value
-      }
-    })
-
-    this.props.fetchTicketsByStatus({
       timespan: {
         month: this.timespan.month,
         year: e.target.value
@@ -125,6 +138,20 @@ class DashboardContainer extends React.Component {
     e.preventDefault()
     this.timespan.month = e.target.value
 
+    this.props.fetchClosedOrRejected({
+      timespan: {
+        year: this.timespan.year,
+        month: e.target.value
+      }
+    })
+
+    this.props.fetchTicketsByGroup({
+      timespan: {
+        year: this.timespan.year,
+        month: e.target.value
+      }
+    })
+
     this.props.fetchCountByType({
       timespan: {
         year: this.timespan.year,
@@ -140,13 +167,6 @@ class DashboardContainer extends React.Component {
     })
 
     this.props.fetchTicketsByPriority({
-      timespan: {
-        year: this.timespan.year,
-        month: e.target.value
-      }
-    })
-
-    this.props.fetchTicketsByStatus({
       timespan: {
         year: this.timespan.year,
         month: e.target.value
@@ -178,6 +198,19 @@ class DashboardContainer extends React.Component {
     //     month: e.target.value
     //   }
     // })
+  }
+
+  getCardTitle (title) {
+    const { month, year } = this.timespan
+    const selectedMonthName = moment()
+      .month(month - 1)
+      .format('MMMM')
+    const currentYear = moment().format('YYYY')
+
+    if (month === moment().format('M') && year === currentYear) {
+      return `${title} This Month`
+    }
+    return `${title} in ${selectedMonthName} ${year}`
   }
 
   render () {
@@ -241,14 +274,30 @@ class DashboardContainer extends React.Component {
         />
         <PageContent>
           <Grid>
-            <GridItem width={'1-2'}>
+            <GridItem width={'1-3'}>
               <TruCard
                 content={
                   <div>
                     <div className='right uk-margin-top uk-margin-small-right'>
                       <PeityBar values={'5,3,9,6,5,9,7'} />
                     </div>
-                    <span className='uk-text-muted uk-text-small'>Total Tickets Count</span>
+                    <span className='uk-text-muted uk-text-small'>Total Tickets Created Last Month </span>
+                    <h2 className='uk-margin-remove'>
+                      <CountUp startNumber={0} endNumber={this.props.dashboardState.totalTicketsLastMonth || 0} />
+                    </h2>
+                  </div>
+                }
+              />
+            </GridItem>
+
+            <GridItem width={'1-3'}>
+              <TruCard
+                content={
+                  <div>
+                    <div className='right uk-margin-top uk-margin-small-right'>
+                      <PeityBar values={'5,3,9,6,5,9,7'} />
+                    </div>
+                    <span className='uk-text-muted uk-text-small'>{this.getCardTitle('Total Tickets Count')}</span>
                     <h2 className='uk-margin-remove'>
                       <CountUp startNumber={0} endNumber={this.props.dashboardState.totalTicketsCount || 0} />
                     </h2>
@@ -257,14 +306,14 @@ class DashboardContainer extends React.Component {
               />
             </GridItem>
 
-            <GridItem width={'1-2'}>
+            <GridItem width={'1-3'}>
               <TruCard
                 content={
                   <div>
                     <div className='right uk-margin-top uk-margin-small-right'>
                       <PeityLine values={'5,3,9,6,5,9,7,3,5,2'} />
                     </div>
-                    <span className='uk-text-muted uk-text-small'>Avg Resolution Time</span>
+                    <span className='uk-text-muted uk-text-small'>{this.getCardTitle('Avg Resolution Time')}</span>
 
                     <h2 className='uk-margin-remove'>
                       <CountUp
@@ -305,7 +354,9 @@ class DashboardContainer extends React.Component {
                 style={{ minHeight: 256 }}
                 header={
                   <div className='uk-text-left'>
-                    <h6 style={{ padding: 15, margin: 0, fontSize: '14px' }}>Ticket Distribution by Type</h6>
+                    <h6 style={{ padding: 15, margin: 0, fontSize: '14px' }}>
+                      {this.getCardTitle('Ticket Distribution by Type')}
+                    </h6>
                   </div>
                 }
                 content={
@@ -322,7 +373,9 @@ class DashboardContainer extends React.Component {
                 style={{ minHeight: 256 }}
                 header={
                   <div className='uk-text-left'>
-                    <h6 style={{ padding: 15, margin: 0, fontSize: '14px' }}>Tickets Distribution by Priority</h6>
+                    <h6 style={{ padding: 15, margin: 0, fontSize: '14px' }}>
+                      {this.getCardTitle('Ticket Distribution by Priority')}
+                    </h6>
                   </div>
                 }
                 content={
@@ -339,12 +392,52 @@ class DashboardContainer extends React.Component {
                 style={{ minHeight: 256 }}
                 header={
                   <div className='uk-text-left'>
-                    <h6 style={{ padding: 15, margin: 0, fontSize: '14px' }}>Tickets Distribution by Status</h6>
+                    <h6 style={{ padding: 15, margin: 0, fontSize: '14px' }}>Current Status of Tickets</h6>
                   </div>
                 }
                 content={
                   <div>
                     <D3Pie data={this.props.dashboardState.ticketsByStatus.toJS()} />
+                  </div>
+                }
+              />
+            </GridItem>
+
+            <GridItem width={'1-2'} extraClass={'uk-margin-medium-top'}>
+              <TruCard
+                loaderActive={this.props.dashboardState.loadingClosedOrRejectedLastMonth}
+                animateLoader={true}
+                style={{ minHeight: 256 }}
+                header={
+                  <div className='uk-text-left'>
+                    <h6 style={{ padding: 15, margin: 0, fontSize: '14px' }}>
+                      {this.getCardTitle('Closed and Rejected Tickets')}
+                    </h6>
+                  </div>
+                }
+                content={
+                  <div>
+                    <D3Pie data={this.props.dashboardState.closedOrRejected.toJS()} />
+                  </div>
+                }
+              />
+            </GridItem>
+
+            <GridItem width={'1-2'} extraClass={'uk-margin-medium-top'}>
+              <TruCard
+                loaderActive={this.props.dashboardState.loadingTicketsByGroup}
+                animateLoader={true}
+                style={{ minHeight: 256 }}
+                header={
+                  <div className='uk-text-left'>
+                    <h6 style={{ padding: 15, margin: 0, fontSize: '14px' }}>
+                      {this.getCardTitle('Ticket Distribution by Group')}
+                    </h6>
+                  </div>
+                }
+                content={
+                  <div>
+                    <D3Pie data={this.props.dashboardState.ticketsByGroup.toJS()} />
                   </div>
                 }
               />
@@ -363,11 +456,13 @@ DashboardContainer.propTypes = {
   fetchDashboardOverdueTickets: PropTypes.func.isRequired,
   fetchCountByType: PropTypes.func.isRequired,
   fetchTotalTicketsCount: PropTypes.func.isRequired,
-  // fetchTotalTicketsLastMonth: PropTypes.func.isRequired,
+  fetchTotalTicketsLastMonth: PropTypes.func.isRequired,
+  fetchClosedOrRejected: PropTypes.func.isRequired,
   fetchTicketsByStatus: PropTypes.func.isRequired,
   fetchTicketsByPriority: PropTypes.func.isRequired,
   dashboardState: PropTypes.object.isRequired,
-  fetchAverageResolutionTime: PropTypes.func.isRequired
+  fetchAverageResolutionTime: PropTypes.func.isRequired,
+  fetchTicketsByGroup: PropTypes.func.isRequired
 }
 
 const mapStateToProps = state => ({
@@ -382,8 +477,10 @@ export default connect(mapStateToProps, {
 
   fetchCountByType,
   fetchTotalTicketsCount,
-  // fetchTotalTicketsLastMonth,
+  fetchTotalTicketsLastMonth,
+  fetchClosedOrRejected,
   fetchTicketsByPriority,
   fetchTicketsByStatus,
-  fetchAverageResolutionTime
+  fetchAverageResolutionTime,
+  fetchTicketsByGroup
 })(DashboardContainer)

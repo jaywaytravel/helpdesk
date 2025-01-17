@@ -21,8 +21,11 @@ import {
   FETCH_COUNT_BY_TYPE,
   FETCH_TICKETS_BY_PRIORITY,
   FETCH_AVERAGE_RESOLUTION_TIME,
+  FETCH_TICKETS_BY_GROUP,
   FETCH_TICKET_STATUSES,
-  FETCH_TOTAL_TICKETS_COUNT
+  FETCH_TOTAL_TICKETS_COUNT,
+  FETCH_TOTAL_TICKETS_LAST_MONTH,
+  FETCH_CLOSED_OR_REJECTED
 } from 'actions/types'
 
 export const fetchDashboardData = createAction(
@@ -41,3 +44,6 @@ export const fetchTicketsByPriority = createAction(FETCH_TICKETS_BY_PRIORITY.ACT
 export const fetchTicketsByStatus = createAction(FETCH_TICKET_STATUSES.ACTION)
 export const fetchTotalTicketsCount = createAction(FETCH_TOTAL_TICKETS_COUNT.ACTION)
 export const fetchAverageResolutionTime = createAction(FETCH_AVERAGE_RESOLUTION_TIME.ACTION)
+export const fetchTicketsByGroup = createAction(FETCH_TICKETS_BY_GROUP.ACTION)
+export const fetchTotalTicketsLastMonth = createAction(FETCH_TOTAL_TICKETS_LAST_MONTH.ACTION)
+export const fetchClosedOrRejected = createAction(FETCH_CLOSED_OR_REJECTED.ACTION)
