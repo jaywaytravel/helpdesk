@@ -121,13 +121,6 @@ class DashboardContainer extends React.Component {
       }
     })
 
-    this.props.fetchTicketsByStatus({
-      timespan: {
-        month: this.timespan.month,
-        year: e.target.value
-      }
-    })
-
     // this.props.fetchDashboardTopGroups({
     //   timespan: {
     //     ...this.timespan,
