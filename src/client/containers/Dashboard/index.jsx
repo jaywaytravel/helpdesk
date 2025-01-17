@@ -404,7 +404,7 @@ class DashboardContainer extends React.Component {
                       data={this.props.dashboardState.ticketsByPriority
                         .toJS()
                         .map(item => [item[0] + ` (${item[1]})`, item[1]])}
-                      customColors={['#FF0000', '#FFA500', '#008000']} // Красный, оранжевый, зеленый
+                      customColors={['#FF0000', '#FFA500', '#4CAF50']} 
                     />
                   </div>
                 }
