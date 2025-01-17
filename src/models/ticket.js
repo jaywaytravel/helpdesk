@@ -1753,8 +1753,6 @@ ticketSchema.statics.getCountByType = function (payload, callback) {
 }
 
 ticketSchema.statics.getTotalTicketsThisMonth = function (payload, callback) {
-  console.log('model payload ', payload)
-
   const { month, year } = payload
 
   if (_.isUndefined(month) || _.isNaN(month) || _.isUndefined(year) || _.isNaN(year)) {
@@ -1762,10 +1760,22 @@ ticketSchema.statics.getTotalTicketsThisMonth = function (payload, callback) {
   }
   const self = this
 
-  const startOfMonth = moment.utc().subtract(1, 'month').startOf('month').toDate()
-  const endOfMonth = moment.utc().subtract(1, 'month').endOf('month').toDate()
+  const startOfMonth = moment
+    .utc()
+    .year(year)
+    .month(month - 1)
+    .startOf('month')
+    .toDate()
+  const endOfMonth = moment
+    .utc()
+    .year(year)
+    .month(month - 1)
+    .endOf('month')
+    .toDate()
 
-  // Строим запрос
+  console.log('startOfMonth: ', startOfMonth)
+  console.log('endOfMonth: ', endOfMonth)
+
   const query = {
     deleted: false,
     date: { $gte: startOfMonth, $lte: endOfMonth }
@@ -1783,11 +1793,9 @@ ticketSchema.statics.getTotalTicketsThisMonth = function (payload, callback) {
 ticketSchema.statics.getTotalTicketsLastMonth = function (callback) {
   const self = this
 
-  // Определяем начало и конец указанного месяца
   const startOfMonth = moment.utc().subtract(1, 'month').startOf('month').toDate()
   const endOfMonth = moment.utc().subtract(1, 'month').endOf('month').toDate()
 
-  // Строим запрос
   const query = {
     deleted: false,
     date: { $gte: startOfMonth, $lte: endOfMonth }
@@ -1914,7 +1922,6 @@ ticketSchema.statics.getTicketsByPriority = function (payload, callback) {
     throw new Error('Invalid month or year')
   }
 
-  // Определяем начало и конец указанного месяца
   const startOfMonth = moment
     .utc()
     .year(year)
@@ -2038,11 +2045,10 @@ ticketSchema.statics.getTicketsByGroup = function (payload, callback) {
     throw new Error('Invalid month or year')
   }
 
-  // Determine the start and end of the specified month
   const startOfMonth = moment
     .utc()
     .year(year)
-    .month(month - 1) // Month is zero-indexed in moment.js
+    .month(month - 1)
     .startOf('month')
     .toDate()
   const endOfMonth = moment

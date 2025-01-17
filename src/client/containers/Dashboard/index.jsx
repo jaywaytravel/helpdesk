@@ -120,6 +120,14 @@ class DashboardContainer extends React.Component {
         year: e.target.value
       }
     })
+
+    this.props.fetchTicketsByStatus({
+      timespan: {
+        month: this.timespan.month,
+        year: e.target.value
+      }
+    })
+
     // this.props.fetchDashboardTopGroups({
     //   timespan: {
     //     ...this.timespan,
@@ -186,6 +194,14 @@ class DashboardContainer extends React.Component {
         month: e.target.value
       }
     })
+
+    this.props.fetchTicketsByStatus({
+      timespan: {
+        ...this.timespan,
+        month: e.target.value
+      }
+    })
+
     // this.props.fetchDashboardTopGroups({
     //   timespan: {
     //     ...this.timespan,
@@ -361,7 +377,11 @@ class DashboardContainer extends React.Component {
                 }
                 content={
                   <div>
-                    <D3Pie data={this.props.dashboardState.countByType.toJS()} />
+                    <D3Pie
+                      data={this.props.dashboardState.countByType
+                        .toJS()
+                        .map(item => [item[0] + `(${item[1]})`, item[1]])}
+                    />
                   </div>
                 }
               />
@@ -380,7 +400,12 @@ class DashboardContainer extends React.Component {
                 }
                 content={
                   <div>
-                    <D3Pie data={this.props.dashboardState.ticketsByPriority.toJS()} />
+                    <D3Pie
+                      data={this.props.dashboardState.ticketsByPriority
+                        .toJS()
+                        .map(item => [item[0] + ` (${item[1]})`, item[1]])}
+                      customColors={['#FF0000', '#FFA500', '#008000']} // Красный, оранжевый, зеленый
+                    />
                   </div>
                 }
               />
@@ -397,7 +422,11 @@ class DashboardContainer extends React.Component {
                 }
                 content={
                   <div>
-                    <D3Pie data={this.props.dashboardState.ticketsByStatus.toJS()} />
+                    <D3Pie
+                      data={this.props.dashboardState.ticketsByStatus
+                        .toJS()
+                        .map(item => [item[0] + `(${item[1]})`, item[1]])}
+                    />
                   </div>
                 }
               />
@@ -417,7 +446,11 @@ class DashboardContainer extends React.Component {
                 }
                 content={
                   <div>
-                    <D3Pie data={this.props.dashboardState.closedOrRejected.toJS()} />
+                    <D3Pie
+                      data={this.props.dashboardState.closedOrRejected
+                        .toJS()
+                        .map(item => [item[0] + `(${item[1]})`, item[1]])}
+                    />
                   </div>
                 }
               />
@@ -437,7 +470,11 @@ class DashboardContainer extends React.Component {
                 }
                 content={
                   <div>
-                    <D3Pie data={this.props.dashboardState.ticketsByGroup.toJS()} />
+                    <D3Pie
+                      data={this.props.dashboardState.ticketsByGroup
+                        .toJS()
+                        .map(item => [item[0] + `(${item[1]})`, item[1]])}
+                    />
                   </div>
                 }
               />

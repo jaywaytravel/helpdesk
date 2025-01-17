@@ -1,7 +1,6 @@
 import React, { useRef, useEffect } from 'react'
 import PropTypes from 'prop-types'
 import { shuffle, map, zipObject } from 'lodash'
-
 import * as d3 from 'vendor/d3/d3.min'
 import 'd3pie'
 import * as c3 from 'c3'
@@ -12,7 +11,9 @@ export default function D3Pie (props) {
 
   useEffect(() => {
     if (pieChart.current && props.data.length > 0) {
-      mappedColors = shuffle(props.colors)
+      const effectiveColors = props.customColors ?? props.colors
+      mappedColors = shuffle(effectiveColors)
+
       mappedColors = zipObject(
         map(props.data, v => v[0]),
         mappedColors
@@ -31,12 +32,12 @@ export default function D3Pie (props) {
         },
         donut: {
           label: {
-            format: (value, ratio, id) => `${id}: ${'value'}`
+            format: ''
           }
         }
       })
     }
-  }, [pieChart.current, props.data])
+  }, [pieChart.current, props.data, props.customColors])
 
   if (!props.data.length > 0) {
     return <div style={{ textAlign: 'center', padding: '20px' }}></div>
@@ -54,7 +55,8 @@ D3Pie.propTypes = {
   type: PropTypes.string,
   size: PropTypes.number,
   emptyLabel: PropTypes.string,
-  colors: PropTypes.arrayOf(PropTypes.string)
+  colors: PropTypes.arrayOf(PropTypes.string),
+  customColors: PropTypes.arrayOf(PropTypes.string)
 }
 
 D3Pie.defaultProps = {
@@ -79,5 +81,6 @@ D3Pie.defaultProps = {
     '#00E5FF',
     '#E040FB',
     '#607D8B'
-  ]
+  ],
+  customColors: null
 }
