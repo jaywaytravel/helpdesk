@@ -1790,26 +1790,6 @@ ticketSchema.statics.getTotalTicketsThisMonth = function (payload, callback) {
   return q.exec()
 }
 
-ticketSchema.statics.getTotalTicketsLastMonth = function (callback) {
-  const self = this
-
-  const startOfMonth = moment.utc().subtract(1, 'month').startOf('month').toDate()
-  const endOfMonth = moment.utc().subtract(1, 'month').endOf('month').toDate()
-
-  const query = {
-    deleted: false,
-    date: { $gte: startOfMonth, $lte: endOfMonth }
-  }
-
-  const q = self.model(COLLECTION).countDocuments(query)
-
-  if (callback) {
-    return q.exec(callback)
-  }
-
-  return q.exec()
-}
-
 ticketSchema.statics.getClosedOrRejected = function (payload, callback) {
   const self = this
 

@@ -2187,16 +2187,6 @@ apiTickets.getAverageResolutionTime = function (req, res) {
   })
 }
 
-apiTickets.getTotalTicketsLastMonth = function (req, res) {
-  const ticketModel = require('../../../models/ticket')
-
-  ticketModel.getTotalTicketsLastMonth(function (err, response) {
-    if (err) return res.status(400).json({ error: 'Invalid Request' })
-
-    res.json({ ...response })
-  })
-}
-
 apiTickets.getTicketsByStatusLastMonth = function (req, res) {
   const ticketModel = require('../../../models/ticket')
 

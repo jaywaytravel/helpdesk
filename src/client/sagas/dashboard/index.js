@@ -99,10 +99,10 @@ function* fetchTotalTicketsCount ({ payload, meta }) {
   }
 }
 
-function* fetchTotalTicketsLastMonth () {
+function* fetchTotalTicketsLastMonth ({ payload, meta }) {
   yield put({ type: FETCH_TOTAL_TICKETS_LAST_MONTH.PENDING })
   try {
-    const response = yield call(api.dashboard.getTotalTicketsLastMonth)
+    const response = yield call(api.dashboard.getTotalTicketsThisMonth, payload)
     yield put({ type: FETCH_TOTAL_TICKETS_LAST_MONTH.SUCCESS, response })
   } catch (error) {
     const errorText = error.response ? error.response.data.error : error

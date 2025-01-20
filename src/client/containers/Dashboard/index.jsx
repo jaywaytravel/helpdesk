@@ -42,6 +42,13 @@ class DashboardContainer extends React.Component {
     year: moment().format('YYYY')
   }
 
+  @observable previousTimespan = {
+    month: moment().subtract(1, 'month').format('M'),
+    year: moment().subtract(1, 'month').format('YYYY')
+  }
+
+  @observable isTimeWasChosen = false
+
   constructor (props) {
     super(props)
   }
@@ -55,9 +62,11 @@ class DashboardContainer extends React.Component {
     this.props.fetchDashboardOverdueTickets()
 
     this.props.fetchCountByType({ timespan: this.timespan })
-    this.props.fetchTotalTicketsLastMonth()
-    this.props.fetchClosedOrRejected({ timespan: this.timespan })
+
+    this.props.fetchTotalTicketsLastMonth({ timespan: this.previousTimespan })
     this.props.fetchTotalTicketsCount({ timespan: this.timespan })
+
+    this.props.fetchClosedOrRejected({ timespan: this.timespan })
 
     this.props.fetchTicketsByStatus({ timespan: this.timespan })
 
@@ -70,6 +79,7 @@ class DashboardContainer extends React.Component {
   onYearChange = e => {
     e.preventDefault()
 
+    this.isTimeWasChosen = true
     this.timespan.year = e.target.value
 
     this.props.fetchClosedOrRejected({
@@ -107,7 +117,7 @@ class DashboardContainer extends React.Component {
       }
     })
 
-    this.props.fetchTotalTicketsCount({
+    this.props.fetchTotalTicketsLastMonth({
       timespan: {
         month: this.timespan.month,
         year: e.target.value
@@ -137,6 +147,7 @@ class DashboardContainer extends React.Component {
 
   onMonthChange = e => {
     e.preventDefault()
+    this.isTimeWasChosen = true
     this.timespan.month = e.target.value
 
     this.props.fetchClosedOrRejected({
@@ -174,7 +185,7 @@ class DashboardContainer extends React.Component {
       }
     })
 
-    this.props.fetchTotalTicketsCount({
+    this.props.fetchTotalTicketsLastMonth({
       timespan: {
         year: this.timespan.year,
         month: e.target.value
@@ -220,6 +231,24 @@ class DashboardContainer extends React.Component {
       return `${title} This Month`
     }
     return `${title} in ${selectedMonthName} ${year}`
+  }
+
+  getCardTitleLastMonth (title) {
+    const { month, year } = this.timespan
+
+    const selectedMonthName = moment()
+      .month(this.timespan.month - 1)
+      .format('MMMM')
+
+    if (!this.isTimeWasChosen) {
+      return `${title} Last Month`
+    }
+
+    return `${title} in ${selectedMonthName} ${year}`
+  }
+
+  formatItem (item) {
+    return `${item[0]} (${item[1]})`
   }
 
   render () {
@@ -290,7 +319,9 @@ class DashboardContainer extends React.Component {
                     <div className='right uk-margin-top uk-margin-small-right'>
                       <PeityBar values={'5,3,9,6,5,9,7'} />
                     </div>
-                    <span className='uk-text-muted uk-text-small'>Total Tickets Created Last Month </span>
+                    <span className='uk-text-muted uk-text-small'>
+                      {this.getCardTitleLastMonth('Total Tickets Count')}
+                    </span>
                     <h2 className='uk-margin-remove'>
                       <CountUp startNumber={0} endNumber={this.props.dashboardState.totalTicketsLastMonth || 0} />
                     </h2>
@@ -306,7 +337,7 @@ class DashboardContainer extends React.Component {
                     <div className='right uk-margin-top uk-margin-small-right'>
                       <PeityBar values={'5,3,9,6,5,9,7'} />
                     </div>
-                    <span className='uk-text-muted uk-text-small'>{this.getCardTitle('Total Tickets Count')}</span>
+                    <span className='uk-text-muted uk-text-small'>Total Tickets Count Current Month</span>
                     <h2 className='uk-margin-remove'>
                       <CountUp startNumber={0} endNumber={this.props.dashboardState.totalTicketsCount || 0} />
                     </h2>
@@ -371,9 +402,7 @@ class DashboardContainer extends React.Component {
                 content={
                   <div>
                     <D3Pie
-                      data={this.props.dashboardState.countByType
-                        .toJS()
-                        .map(item => [item[0] + `(${item[1]})`, item[1]])}
+                      data={this.props.dashboardState.countByType.toJS().map(item => [this.formatItem(item), item[1]])}
                     />
                   </div>
                 }
@@ -396,8 +425,8 @@ class DashboardContainer extends React.Component {
                     <D3Pie
                       data={this.props.dashboardState.ticketsByPriority
                         .toJS()
-                        .map(item => [item[0] + ` (${item[1]})`, item[1]])}
-                      customColors={['#FF0000', '#FFA500', '#4CAF50']} 
+                        .map(item => [this.formatItem(item), item[1]])}
+                      customColors={['#FF0000', '#FFA500', '#4CAF50']}
                     />
                   </div>
                 }
@@ -418,7 +447,7 @@ class DashboardContainer extends React.Component {
                     <D3Pie
                       data={this.props.dashboardState.ticketsByStatus
                         .toJS()
-                        .map(item => [item[0] + `(${item[1]})`, item[1]])}
+                        .map(item => [this.formatItem(item), item[1]])}
                     />
                   </div>
                 }
@@ -442,7 +471,7 @@ class DashboardContainer extends React.Component {
                     <D3Pie
                       data={this.props.dashboardState.closedOrRejected
                         .toJS()
-                        .map(item => [item[0] + `(${item[1]})`, item[1]])}
+                        .map(item => [this.formatItem(item), item[1]])}
                     />
                   </div>
                 }
@@ -466,7 +495,7 @@ class DashboardContainer extends React.Component {
                     <D3Pie
                       data={this.props.dashboardState.ticketsByGroup
                         .toJS()
-                        .map(item => [item[0] + `(${item[1]})`, item[1]])}
+                        .map(item => [this.formatItem(item), item[1]])}
                     />
                   </div>
                 }

@@ -46,10 +46,6 @@ api.dashboard.getTotalTicketsThisMonth = payload => {
   return axios.get(`/api/v1/tickets/count?year=${timespan.year}&month=${timespan.month}`).then(res => res.data)
 }
 
-api.dashboard.getTotalTicketsLastMonth = () => {
-  return axios.get('/api/v1/tickets/count/last-month').then(res => res.data)
-}
-
 api.dashboard.getClosedOrRejected = payload => {
   const timespan = payload.timespan
   return axios
