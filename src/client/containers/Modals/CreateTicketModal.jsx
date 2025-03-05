@@ -171,7 +171,7 @@ class CreateTicketModal extends React.Component {
     data.issue = this.issueMde.easymde.value()
     data.socketid = this.props.socket.io.engine.id
 
-    data.cc = this.cc.getSelected() || []
+    // data.cc = this.cc.getSelected() || []
 
     this.props.createTicket(data)
   }
@@ -249,11 +249,11 @@ class CreateTicketModal extends React.Component {
               </GridItem>
             </Grid>
           </div>
-          <div className='uk-margin-medium-bottom'>
+          {/* <div className='uk-margin-medium-bottom'>
             <label className={'uk-form-label'}>Cc</label>
 
             <MultiSelect items={mappedAccounts} ref={r => (this.cc = r)} />
-          </div>
+          </div> */}
           <div className='uk-margin-medium-bottom'>
             <label className={'uk-form-label'}>Type</label>
             <SingleSelect

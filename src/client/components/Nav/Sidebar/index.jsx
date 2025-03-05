@@ -83,6 +83,8 @@ class Sidebar extends React.Component {
   render () {
     const { activeItem, activeSubItem, sessionUser } = this.props
 
+    console.log('sessionUser ', sessionUser)
+
     return (
       <div
         className={'sidebar nopadding'}
@@ -138,7 +140,7 @@ class Sidebar extends React.Component {
                 </Submenu>
               </SidebarItem>
             )}
-            {sessionUser && Helpers.canUser('accounts:view') && (
+            {sessionUser && (sessionUser.role.isAdmin || sessionUser.role.isAgent) && Helpers.canUser('accounts:view') && (
               <SidebarItem
                 text='Accounts'
                 icon='&#xE7FD;'
