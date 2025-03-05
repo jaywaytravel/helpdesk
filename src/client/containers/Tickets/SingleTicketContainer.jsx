@@ -14,25 +14,28 @@
 import React, { Fragment, createRef } from 'react'
 import PropTypes from 'prop-types'
 import { connect } from 'react-redux'
-import { observable, computed, makeObservable } from 'mobx'
+import { observable, computed, makeObservable, toJS } from 'mobx'
 import { observer } from 'mobx-react'
 import sortBy from 'lodash/sortBy'
 import union from 'lodash/union'
 
 import { transferToThirdParty, fetchTicketTypes, fetchTicketStatus } from 'actions/tickets'
 import { fetchGroups, unloadGroups } from 'actions/groups'
+import { fetchAccounts } from 'actions/accounts'
 import { showModal } from 'actions/common'
 
 import {
   TICKETS_UPDATE,
   TICKETS_UI_GROUP_UPDATE,
   TICKETS_GROUP_SET,
+  TICKETS_SUBSCRIBERS_SET,
   TICKETS_UI_TYPE_UPDATE,
   TICKETS_TYPE_SET,
   TICKETS_UI_PRIORITY_UPDATE,
   TICKETS_PRIORITY_SET,
   TICKETS_ASSIGNEE_LOAD,
   TICKETS_ASSIGNEE_UPDATE,
+  TICKETS_SUBSCRIBERS_UPDATE,
   TICKETS_UI_DUEDATE_UPDATE,
   // TICKETS_DUEDATE_SET,
   TICKETS_UI_TAGS_UPDATE,
@@ -53,6 +56,7 @@ import TruTabSection from 'components/TruTabs/TruTabSection'
 import TruTabSelector from 'components/TruTabs/TruTabSelector'
 import TruTabSelectors from 'components/TruTabs/TruTabSelectors'
 import TruTabWrapper from 'components/TruTabs/TruTabWrapper'
+import MultiSelect from 'components/MultiSelect'
 
 import axios from 'axios'
 import helpers from 'lib/helpers'
@@ -107,6 +111,7 @@ class SingleTicketContainer extends React.Component {
     this.onUpdateTicketGroup = this.onUpdateTicketGroup.bind(this)
     this.onUpdateTicketDueDate = this.onUpdateTicketDueDate.bind(this)
     this.onUpdateTicketTags = this.onUpdateTicketTags.bind(this)
+    this.onUpdateTicketSubscribers = this.onUpdateTicketSubscribers.bind(this)
   }
 
   @computed
@@ -139,11 +144,13 @@ class SingleTicketContainer extends React.Component {
     this.props.socket.on(TICKETS_UI_TYPE_UPDATE, this.onUpdateTicketType)
     this.props.socket.on(TICKETS_UI_PRIORITY_UPDATE, this.onUpdateTicketPriority)
     this.props.socket.on(TICKETS_UI_GROUP_UPDATE, this.onUpdateTicketGroup)
+    this.props.socket.on(TICKETS_SUBSCRIBERS_UPDATE, this.onUpdateTicketSubscribers)
     this.props.socket.on(TICKETS_UI_DUEDATE_UPDATE, this.onUpdateTicketDueDate)
     this.props.socket.on(TICKETS_UI_TAGS_UPDATE, this.onUpdateTicketTags)
 
     fetchTicket(this)
     this.props.fetchTicketTypes()
+    this.props.fetchAccounts({ type: 'all', limit: -1 })
     this.props.fetchGroups()
     this.props.fetchTicketStatus()
   }
@@ -159,6 +166,7 @@ class SingleTicketContainer extends React.Component {
     this.props.socket.off(TICKETS_UI_TYPE_UPDATE, this.onUpdateTicketType)
     this.props.socket.off(TICKETS_UI_PRIORITY_UPDATE, this.onUpdateTicketPriority)
     this.props.socket.off(TICKETS_UI_GROUP_UPDATE, this.onUpdateTicketGroup)
+    this.props.socket.off(TICKETS_SUBSCRIBERS_UPDATE, this.onUpdateTicketSubscribers)
     this.props.socket.off(TICKETS_UI_DUEDATE_UPDATE, this.onUpdateTicketDueDate)
     this.props.socket.off(TICKETS_UI_TAGS_UPDATE, this.onUpdateTicketTags)
 
@@ -196,7 +204,15 @@ class SingleTicketContainer extends React.Component {
   }
 
   onUpdateTicketGroup (data) {
+    console.log('data ::: ', data)
+
     if (this.ticket._id === data._id) this.ticket.group = data.group
+  }
+
+  onUpdateTicketSubscribers (data) {
+    console.log('data ::: ', data)
+
+    if (this.ticket._id === data._id) this.ticket.subscribers = data.subscribers
   }
 
   onUpdateTicketDueDate (data) {
@@ -274,6 +290,21 @@ class SingleTicketContainer extends React.Component {
         })
       : []
 
+    const mappedAccounts = this.props.accountsState
+      ? Array.from(
+          new Map(
+            this.props.accountsState.accounts.map(group => [
+              group.get('_id'),
+              {
+                text: group.get('fullname'),
+                value: group.get('_id')
+              }
+            ])
+          ).values()
+        )
+      : []
+    const mappedSubscribers = this.ticket?.subscribers.map(i => i._id)
+
     const mappedTypes = this.props.ticketTypes
       ? this.props.ticketTypes.map(type => {
           return { text: type.get('name'), value: type.get('_id'), raw: type.toJS() }
@@ -306,7 +337,6 @@ class SingleTicketContainer extends React.Component {
         return helpers.hasPermOverRole(this.ticket.owner.role, this.props.sessionUser.role, 'tickets:update', false)
       }
     }
-
     return (
       <div className={'uk-clearfix uk-position-relative'} style={{ width: '100%', height: '100vh' }}>
         {!this.ticket && <SpinLoader active={true} />}
@@ -486,6 +516,49 @@ class SingleTicketContainer extends React.Component {
                             </select>
                           )}
                           {!hasTicketUpdate && <div className={'input-box'}>{this.ticket.group.name}</div>}
+                        </div>
+                        {/*  Cc */}
+                        <div className='uk-width-1-1 nopadding uk-clearfix'>
+                          <span>Cc</span>
+                          {hasTicketUpdate && (
+                            <MultiSelect
+                              initialSelected={mappedSubscribers}
+                              items={mappedAccounts}
+                              onChange={selectedItemId => {
+                                if (this.ticket.subscribers.length > 0 && selectedItemId.length === 1) {
+                                  const selectedAccount = this.props.accountsState.accounts.find(i => {
+                                    return i.get('_id') == selectedItemId
+                                  })
+
+                                  const accountJS = selectedAccount ? selectedAccount.toJS() : null
+
+                                  const upd = selectedAccount
+                                    ? this.ticket.subscribers.some(sub => sub._id === accountJS._id)
+                                      ? this.ticket.subscribers.filter(sub => sub._id !== accountJS._id)
+                                      : [...this.ticket.subscribers, accountJS]
+                                    : this.ticket.subscribers
+
+                                  this.props.socket.emit(TICKETS_SUBSCRIBERS_SET, {
+                                    _id: this.ticket._id,
+                                    value: upd
+                                  })
+                                }
+                              }}
+                              ref={r => (this.cc = r)}
+                            />
+                          )}
+                          {!hasTicketUpdate && (
+                            <div className={'input-box'}>
+                              {
+                                this.ticket.subscribers.filter(
+                                  i =>
+                                    i._id !==
+                                      this.ticket.history.find(item => item.action === 'ticket:created').owner._id &&
+                                    i._id !== this.ticket.assignee._id
+                                ).fullname
+                              }
+                            </div>
+                          )}
                         </div>
                         {/*  Due Date */}
                         {/* <div className='uk-width-1-1 p-0'>
@@ -857,8 +930,10 @@ SingleTicketContainer.propTypes = {
   priorities: PropTypes.object.isRequired,
   fetchTicketTypes: PropTypes.func.isRequired,
   groupsState: PropTypes.object.isRequired,
+  accountsState: PropTypes.object.isRequired,
   fetchGroups: PropTypes.func.isRequired,
   unloadGroups: PropTypes.func.isRequired,
+  fetchAccounts: PropTypes.func.isRequired,
   showModal: PropTypes.func.isRequired,
   transferToThirdParty: PropTypes.func,
   ticketStatuses: PropTypes.object.isRequired,
@@ -873,7 +948,8 @@ const mapStateToProps = state => ({
   ticketTypes: state.ticketsState.types,
   priorities: state.ticketsState.priorities,
   ticketStatuses: state.ticketsState.ticketStatuses,
-  groupsState: state.groupsState
+  groupsState: state.groupsState,
+  accountsState: state.accountsState
 })
 
 export default connect(mapStateToProps, {
@@ -881,6 +957,7 @@ export default connect(mapStateToProps, {
   fetchGroups,
   fetchTicketStatus,
   unloadGroups,
+  fetchAccounts,
   showModal,
   transferToThirdParty
 })(SingleTicketContainer)

@@ -39,6 +39,7 @@ function register (socket) {
   events.onSetTicketType(socket)
   events.onSetTicketPriority(socket)
   events.onSetTicketGroup(socket)
+  events.onSetTicketSubscriber(socket)
   events.onSetTicketDueDate(socket)
   events.onSetTicketIssue(socket)
   events.onCommentNoteSet(socket)
@@ -269,6 +270,39 @@ events.onSetTicketGroup = function (socket) {
             // emitter.emit('ticket:updated', tt)
             utils.sendToAllConnectedClients(io, socketEvents.TICKETS_UI_GROUP_UPDATE, tt)
           })
+        })
+      })
+    })
+  })
+}
+
+events.onSetTicketSubscriber = function (socket) {
+  socket.on(socketEvents.TICKETS_SUBSCRIBERS_SET, function (data) {
+    const ticketId = data._id
+    const subscribers = data.value
+    const ownerId = socket.request.user._id
+
+    console.log(' data in onSetTicketSubscriber :: ', data)
+
+    if (_.isUndefined(ticketId) || _.isUndefined(subscribers)) return true
+
+    ticketSchema.getTicketById(ticketId, function (err, ticket) {
+      if (err) return true
+
+      ticket.subscribers = subscribers
+
+      ticket.setTicketSubscriber(ownerId, subscribers, function (err, t) {
+        if (err) return true
+
+        t.save(function (err, tt) {
+          if (err) return true
+
+          emitter.emit('ticket:subscriber:update', {
+            ticketId: tt._id,
+            subscribers: tt.subscribers
+          })
+
+          utils.sendToAllConnectedClients(io, socketEvents.TICKETS_SUBSCRIBERS_UPDATE, tt)
         })
       })
     })

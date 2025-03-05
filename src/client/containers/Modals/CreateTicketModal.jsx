@@ -31,6 +31,7 @@ import BaseModal from 'containers/Modals/BaseModal'
 import Grid from 'components/Grid'
 import GridItem from 'components/Grid/GridItem'
 import SingleSelect from 'components/SingleSelect'
+import MultiSelect from 'components/MultiSelect'
 import SpinLoader from 'components/SpinLoader'
 import Button from 'components/Button'
 import EasyMDE from 'components/EasyMDE'
@@ -170,6 +171,8 @@ class CreateTicketModal extends React.Component {
     data.issue = this.issueMde.easymde.value()
     data.socketid = this.props.socket.io.engine.id
 
+    data.cc = this.cc.getSelected() || []
+
     this.props.createTicket(data)
   }
 
@@ -180,10 +183,18 @@ class CreateTicketModal extends React.Component {
       (shared.sessionUser.role.isAdmin || shared.sessionUser.role.isAgent)
 
     const mappedAccounts = this.props.accounts
-      .map(a => {
-        return { text: a.get('fullname'), value: a.get('_id') }
-      })
-      .toArray()
+      ? Array.from(
+          new Map(
+            this.props.accounts.map(group => [
+              group.get('_id'),
+              {
+                text: group.get('fullname'),
+                value: group.get('_id')
+              }
+            ])
+          ).values()
+        )
+      : []
 
     // eslint-disable-next-line prefer-const
     let mappedGroups = this.props.groups.map(grp => ({ text: grp.get('name'), value: grp.get('_id') })).toArray()
@@ -215,7 +226,7 @@ class CreateTicketModal extends React.Component {
           <div className='uk-margin-medium-bottom'>
             <Grid>
               {allowAgentUserTickets && (
-                <GridItem width={'1-3'}>
+                <GridItem width={'2-4'}>
                   <label className={'uk-form-label'}>Owner</label>
                   <SingleSelect
                     showTextbox={true}
@@ -226,7 +237,7 @@ class CreateTicketModal extends React.Component {
                   />
                 </GridItem>
               )}
-              <GridItem width={allowAgentUserTickets ? '2-3' : '1-1'}>
+              <GridItem width={allowAgentUserTickets ? '2-4' : '1-1'}>
                 <label className={'uk-form-label'}>Group</label>
                 <SingleSelect
                   showTextbox={false}
@@ -237,6 +248,11 @@ class CreateTicketModal extends React.Component {
                 />
               </GridItem>
             </Grid>
+          </div>
+          <div className='uk-margin-medium-bottom'>
+            <label className={'uk-form-label'}>Cc</label>
+
+            <MultiSelect items={mappedAccounts} ref={r => (this.cc = r)} />
           </div>
           <div className='uk-margin-medium-bottom'>
             <label className={'uk-form-label'}>Type</label>

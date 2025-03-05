@@ -428,6 +428,24 @@ ticketSchema.methods.setTicketGroup = function (ownerId, groupId, callback) {
   })
 }
 
+ticketSchema.methods.setTicketSubscriber = function (ownerId, subscribers, callback) {
+  const self = this
+  self.subscribers = subscribers
+
+  self.populate('subscribers', function (err, ticket) {
+    if (err) return callback(err)
+
+    const historyItem = {
+      action: 'ticket:set:subscriber',
+      description: 'Ticket Subscribers update',
+      owner: ownerId
+    }
+    self.history.push(historyItem)
+
+    return callback(null, ticket)
+  })
+}
+
 ticketSchema.methods.setTicketDueDate = function (ownerId, dueDate, callback) {
   const self = this
   self.dueDate = dueDate

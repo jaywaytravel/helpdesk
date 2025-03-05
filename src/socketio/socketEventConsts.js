@@ -32,6 +32,9 @@ exported.TICKETS_STATUS_SET = '$trudesk:tickets:status:set'
 exported.TICKETS_UI_GROUP_UPDATE = '$trudesk:tickets:ui:group:update'
 exported.TICKETS_GROUP_SET = '$trudesk:tickets:group:set'
 
+exported.TICKETS_SUBSCRIBERS_SET = '$trudesk:tickets:subscribers:set'
+exported.TICKETS_SUBSCRIBERS_UPDATE = '$trudesk:tickets:subscribers:update'
+
 exported.TICKETS_UI_TYPE_UPDATE = '$trudesk:tickets:ui:type:update'
 exported.TICKETS_TYPE_SET = '$trudesk:tickets:type:set'
 
