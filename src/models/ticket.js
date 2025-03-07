@@ -437,7 +437,7 @@ ticketSchema.methods.setTicketSubscriber = function (ownerId, subscribers, callb
 
     const historyItem = {
       action: 'ticket:set:subscriber',
-      description: 'Ticket Subscribers update',
+      description: `Ticket Subscribers update: ${subscribers.map(i => i.fullname).join(', ')}`,
       owner: ownerId
     }
     self.history.push(historyItem)
