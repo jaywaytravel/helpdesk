@@ -198,6 +198,7 @@ function formatDateToGMT (isoDateString) {
                           if (err) winston.warn('[trudesk:events:sendSubscriberEmail] - ' + err)
 
                           winston.debug('Sent [' + emails.length + '] emails.')
+                          winston.debug('Sent to [' + emails.join() + '] emails.')
                         })
 
                         return c()

@@ -121,7 +121,7 @@ const ticketSchema = mongoose.Schema({
   attachments: [attachmentSchema],
   history: [historySchema],
   //TODO ADD TEMPLATES
-  subscribers: [{ type: mongoose.Schema.Types.ObjectId, ref: 'accounts' }]
+  subscribers: [{ type: mongoose.Schema.Types.ObjectId, ref: 'accounts', autopopulate: true }]
 })
 
 ticketSchema.index({ deleted: -1, group: 1, status: 1 })

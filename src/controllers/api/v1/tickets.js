@@ -20,6 +20,7 @@ const permissions = require('../../../permissions')
 const emitter = require('../../../emitter')
 const xss = require('xss')
 const sanitizeHtml = require('sanitize-html')
+const mongoose = require('mongoose')
 
 const apiTickets = {}
 
@@ -452,11 +453,23 @@ apiTickets.create = function (req, res) {
         tIssue = sanitizeHtml(tIssue).trim()
         ticket.issue = xss(marked.parse(tIssue))
         ticket.history = [HistoryItem]
-        ticket.subscribers = [ticket.owner]
 
-        if (postData.cc) {
-          ticket.subscribers.push(postData.cc)
+        let subscribers = [ticket.owner]
+
+        console.log('subscribers after assinging ticket.owner :::: ', subscribers)
+
+        if (postData.subscribers) {
+          if (!Array.isArray(postData.subscribers)) {
+            postData.subscribers = [postData.subscribers]
+          }
+
+          subscribers = [...subscribers, ...postData.subscribers.map(subscriber => mongoose.Types.ObjectId(subscriber))]
+
+          console.log('subscribers if postData.subscribers :::: ', subscribers)
         }
+
+        ticket.subscribers = subscribers
+        console.log('subscribers final :::: ', subscribers)
 
         ticket.save(function (err, t) {
           if (err) return done({ status: 400, error: err })

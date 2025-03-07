@@ -549,14 +549,7 @@ class SingleTicketContainer extends React.Component {
                           )}
                           {!hasTicketUpdate && (
                             <div className={'input-box'}>
-                              {
-                                this.ticket.subscribers.filter(
-                                  i =>
-                                    i._id !==
-                                      this.ticket.history.find(item => item.action === 'ticket:created').owner._id &&
-                                    i._id !== this.ticket.assignee._id
-                                ).fullname
-                              }
+                              {this.ticket.subscribers.map(it => it.fullname).join(', ')}
                             </div>
                           )}
                         </div>

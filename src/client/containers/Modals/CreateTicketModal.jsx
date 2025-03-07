@@ -16,7 +16,7 @@ import React from 'react'
 import PropTypes from 'prop-types'
 import { connect } from 'react-redux'
 import { observer } from 'mobx-react'
-import { makeObservable, observable, when } from 'mobx'
+import { makeObservable, observable, when, toJS } from 'mobx'
 import { head, orderBy } from 'lodash'
 import axios from 'axios'
 import Log from '../../logger'
@@ -39,9 +39,10 @@ import EasyMDE from 'components/EasyMDE'
 @observer
 class CreateTicketModal extends React.Component {
   @observable priorities = []
-  @observable allAccounts = this.props.accounts || []
-  @observable groupAccounts = []
+  @observable ccAccounts = this.props.accounts || []
+  @observable accountsByGroup = this.props.accounts || []
   @observable selectedPriority = ''
+  @observable mappedGroups = []
 
   constructor (props) {
     super(props)
@@ -58,7 +59,7 @@ class CreateTicketModal extends React.Component {
     this.props.fetchTicketTypes()
     // this.props.getTagsWithPage({ limit: -1 })
     this.props.fetchGroups()
-    this.props.fetchAccountsCreateTicket({ type: 'all', limit: 1000 })
+    this.props.fetchAccountsCreateTicket({ type: 'customers', limit: 1000 })
     helpers.UI.inputs()
     helpers.formvalidator()
     this.defaultTicketTypeWatcher = when(
@@ -87,12 +88,46 @@ class CreateTicketModal extends React.Component {
         Log.error(error)
         helpers.UI.showSnackbar(`Error: ${error.response.data.error}`)
       })
+
+    this.updateMappedGroups()
+
+    this.updateAccountsByGroup()
   }
 
-  componentDidUpdate () {}
+  componentDidUpdate (prevProps) {
+    if (prevProps.groups !== this.props.groups) {
+      this.updateMappedGroups()
+    }
+
+    if (prevProps.accounts !== this.props.accounts) {
+      this.updateAccountsByGroup()
+    }
+  }
 
   componentWillUnmount () {
     if (this.defaultTicketTypeWatcher) this.defaultTicketTypeWatcher()
+  }
+
+  updateAccountsByGroup () {
+    if (!this.props.accounts || this.props.accounts.size === 0) return
+
+    this.accountsByGroup = this.props.accounts.filter(acc =>
+      acc.get('groups').some(group => group.get('name') === 'Finance')
+    )
+
+    console.log('accountsByGroup ::: ', this.accountsByGroup)
+  }
+
+  updateMappedGroups () {
+    this.mappedGroups = this.props.groups.map(grp => ({ text: grp.get('name'), value: grp.get('_id') })).toArray()
+
+    const defaultGroup = this.mappedGroups.find(grp => grp.text === 'All')
+
+    this.mappedGroups = this.mappedGroups.filter(grp =>
+      this.mappedGroups.length > 1 ? grp.text !== 'All' : defaultGroup || grp
+    )
+
+    console.log(' mappedGroups ::::  ', this.mappedGroups)
   }
 
   onTicketTypeSelectChange (e) {
@@ -128,6 +163,18 @@ class CreateTicketModal extends React.Component {
 
   onPriorityRadioChange (e) {
     this.selectedPriority = e.target.value
+  }
+
+  handleGroupSelectChange (e) {
+    const groupName = e.target.selectedOptions[0].text
+
+    const accountsByGroup = this.props.accounts
+      ? this.props.accounts.filter(acc => acc.get('groups').some(group => group.get('name') === groupName))
+      : []
+
+    console.log('accountsByGroup ::: ', accountsByGroup)
+
+    this.accountsByGroup = accountsByGroup || []
   }
 
   onFormSubmit (e) {
@@ -171,7 +218,7 @@ class CreateTicketModal extends React.Component {
     data.issue = this.issueMde.easymde.value()
     data.socketid = this.props.socket.io.engine.id
 
-    // data.cc = this.cc.getSelected() || []
+    data.subscribers = this.subscribers.getSelected()
 
     this.props.createTicket(data)
   }
@@ -182,7 +229,21 @@ class CreateTicketModal extends React.Component {
       viewdata.get('ticketSettings').get('allowAgentUserTickets') &&
       (shared.sessionUser.role.isAdmin || shared.sessionUser.role.isAgent)
 
-    const mappedAccounts = this.props.accounts
+    const mappedAccountsByGroup = this.accountsByGroup
+      ? Array.from(
+          new Map(
+            this.accountsByGroup.map(group => [
+              group.get('_id'),
+              {
+                text: group.get('fullname'),
+                value: group.get('_id')
+              }
+            ])
+          ).values()
+        )
+      : []
+
+    const mappedAccountsCc = this.props.accounts
       ? Array.from(
           new Map(
             this.props.accounts.map(group => [
@@ -196,15 +257,12 @@ class CreateTicketModal extends React.Component {
         )
       : []
 
-    // eslint-disable-next-line prefer-const
-    let mappedGroups = this.props.groups.map(grp => ({ text: grp.get('name'), value: grp.get('_id') })).toArray()
-
-    const defaultGroup = mappedGroups.find(grp => grp.text === 'All')
-    mappedGroups = mappedGroups.filter(grp => (mappedGroups.length > 1 ? grp.text !== 'All' : defaultGroup || grp))
-
     const mappedTicketTypes = this.props.ticketTypes.toArray().map(type => {
       return { text: type.get('name'), value: type.get('_id') }
     })
+
+    console.log('mappedGroups ::: ', typeof this.mappedGroups)
+    console.log('mappedGroups ::: ', toJS(this.mappedGroups))
 
     return (
       <BaseModal {...this.props} options={{ bgclose: false }}>
@@ -230,7 +288,7 @@ class CreateTicketModal extends React.Component {
                   <label className={'uk-form-label'}>Owner</label>
                   <SingleSelect
                     showTextbox={true}
-                    items={mappedAccounts}
+                    items={mappedAccountsByGroup}
                     defaultValue={this.props.shared.sessionUser._id}
                     width={'100%'}
                     ref={i => (this.ownerSelect = i)}
@@ -241,19 +299,20 @@ class CreateTicketModal extends React.Component {
                 <label className={'uk-form-label'}>Group</label>
                 <SingleSelect
                   showTextbox={false}
-                  items={mappedGroups}
-                  defaultValue={head(mappedGroups) ? head(mappedGroups).value : ''}
+                  items={toJS(this.mappedGroups)}
+                  defaultValue={this.mappedGroups && this.mappedGroups[0] ? head(toJS(this.mappedGroups)).value : ''}
                   width={'100%'}
                   ref={i => (this.groupSelect = i)}
+                  onSelectChange={e => this.handleGroupSelectChange(e)}
                 />
               </GridItem>
             </Grid>
           </div>
-          {/* <div className='uk-margin-medium-bottom'>
+          <div className='uk-margin-medium-bottom'>
             <label className={'uk-form-label'}>Cc</label>
 
-            <MultiSelect items={mappedAccounts} ref={r => (this.cc = r)} />
-          </div> */}
+            <MultiSelect items={mappedAccountsCc} ref={r => (this.subscribers = r)} />
+          </div>
           <div className='uk-margin-medium-bottom'>
             <label className={'uk-form-label'}>Type</label>
             <SingleSelect

@@ -183,6 +183,7 @@ const sendMail = async (ticket, emails, baseUrl, betaEnabled) => {
       }
 
       logger.debug(`Sent [${emails.length}] emails.`)
+      logger.debug('Sent to [' + emails.join() + '] emails.')
     })
   }
 }
@@ -246,8 +247,19 @@ module.exports = async data => {
       recipient = ['helpdesk@jaywaytravel.com']
     }
 
+    let subscriberEmails = []
+    if (ticket.subscribers && ticket.subscribers.length > 0) {
+      subscriberEmails = [
+        ...new Set(ticket.subscribers.filter(member => member.email && !member.deleted).map(member => member.email))
+      ]
+    }
+
+    const allRecipients = [...new Set([...recipient, ...subscriberEmails])]
+
     //todo consider better solution later
-    if (mailerEnabled) await sendMail(ticket, recipient, baseUrl, betaEnabled)
+    if (mailerEnabled && allRecipients.length > 0) {
+      await sendMail(ticket, allRecipients, baseUrl, betaEnabled)
+    }
     if (ticket.group.public) await createPublicNotification(ticket)
     else await createNotification(ticket)
 
