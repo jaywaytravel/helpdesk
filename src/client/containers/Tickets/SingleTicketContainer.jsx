@@ -112,6 +112,8 @@ class SingleTicketContainer extends React.Component {
     this.onUpdateTicketDueDate = this.onUpdateTicketDueDate.bind(this)
     this.onUpdateTicketTags = this.onUpdateTicketTags.bind(this)
     this.onUpdateTicketSubscribers = this.onUpdateTicketSubscribers.bind(this)
+
+    this.handleChange = this.handleChange.bind(this)
   }
 
   @computed
@@ -281,6 +283,26 @@ class SingleTicketContainer extends React.Component {
       return obj.id === id
     })
     return item ? item.htmlColor : null
+  }
+
+  handleChange (selectedItemId) {
+    if (selectedItemId.length > 1 || typeof this.cc?.getSelected() === 'undefined') {
+      return
+    }
+    const selectedAccount = this.props.accountsState.accounts.find(i => i.get('_id') === selectedItemId[0])
+
+    const accountJS = selectedAccount ? selectedAccount.toJS() : null
+
+    const upd = selectedAccount
+      ? this.ticket.subscribers.some(sub => sub._id === accountJS._id)
+        ? this.ticket.subscribers.filter(sub => sub._id !== accountJS._id)
+        : [...this.ticket.subscribers, accountJS]
+      : this.ticket.subscribers
+
+    this.props.socket.emit(TICKETS_SUBSCRIBERS_SET, {
+      _id: this.ticket._id,
+      value: upd
+    })
   }
 
   render () {
@@ -524,26 +546,7 @@ class SingleTicketContainer extends React.Component {
                             <MultiSelect
                               initialSelected={mappedSubscribers}
                               items={mappedAccounts}
-                              onChange={selectedItemId => {
-                                if (this.ticket.subscribers.length > 0 && selectedItemId.length === 1) {
-                                  const selectedAccount = this.props.accountsState.accounts.find(i => {
-                                    return i.get('_id') == selectedItemId
-                                  })
-
-                                  const accountJS = selectedAccount ? selectedAccount.toJS() : null
-
-                                  const upd = selectedAccount
-                                    ? this.ticket.subscribers.some(sub => sub._id === accountJS._id)
-                                      ? this.ticket.subscribers.filter(sub => sub._id !== accountJS._id)
-                                      : [...this.ticket.subscribers, accountJS]
-                                    : this.ticket.subscribers
-
-                                  this.props.socket.emit(TICKETS_SUBSCRIBERS_SET, {
-                                    _id: this.ticket._id,
-                                    value: upd
-                                  })
-                                }
-                              }}
+                              onChange={this.handleChange}
                               ref={r => (this.cc = r)}
                             />
                           )}
