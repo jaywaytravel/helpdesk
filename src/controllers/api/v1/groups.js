@@ -16,7 +16,6 @@ const _ = require('lodash')
 const async = require('async')
 const GroupSchema = require('../../../models/group')
 const ticketSchema = require('../../../models/ticket')
-const winston = require('./../../../logger')
 
 const apiGroups = {}
 
@@ -235,7 +234,6 @@ apiGroups.updateGroup = function (req, res) {
     group.save(function (err, savedGroup) {
       if (err) return res.status(400).json({ error: err.message })
 
-      winston.info('The group was updated : ', JSON.stringify(savedGroup))
       return res.json({ success: true, group: savedGroup })
     })
   })
