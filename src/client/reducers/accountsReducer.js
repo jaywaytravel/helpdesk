@@ -44,8 +44,14 @@ const reducer = handleActions(
 
     [FETCH_ACCOUNTS.SUCCESS]: (state, action) => {
       const arr = state.accounts.toArray()
-      action.payload.response.accounts.forEach(i => {
-        arr.push(i)
+      action.payload.response.accounts.forEach(account => {
+        const existingIndex = arr.findIndex(existingAccount => existingAccount._id === account._id)
+
+        if (existingIndex === -1) {
+          arr.push(account)
+        } else {
+          arr[existingIndex] = account
+        }
       })
       return {
         ...state,
@@ -98,12 +104,15 @@ const reducer = handleActions(
       const customer = !resUser.role.isAdmin && !resUser.role.isAgent
 
       let accounts = null
-      if ((state.type === 'agents' || state.type === 'admins') && !customer)
+      if ((state.type === 'agents' || state.type === 'admins') && !customer) {
         accounts = state.accounts.set(accountIndex, fromJS(resUser))
-      else if ((state.type === 'agents' || state.type === 'admins') && customer)
+      } else if ((state.type === 'agents' || state.type === 'admins') && customer) {
         accounts = state.accounts.remove(accountIndex)
-      else if (state.type === 'customers' && !customer) accounts = state.accounts.remove(accountIndex)
-      else if (state.type === 'customers' && customer) accounts = state.accounts.set(accountIndex, fromJS(resUser))
+      } else if (state.type === 'customers' && !customer) {
+        accounts = state.accounts.remove(accountIndex)
+      } else if (state.type === 'customers' && customer) {
+        accounts = state.accounts.set(accountIndex, fromJS(resUser))
+      }
 
       return {
         ...state,

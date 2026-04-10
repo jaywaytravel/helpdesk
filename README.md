@@ -35,6 +35,8 @@ Take it for a spin on Ubuntu 20.04 with a one liner - <br />`curl -L -s https://
 ### Documentation
 Online documentation: [https://docs.trudesk.io/v1.2](https://docs.trudesk.io/v1.2)
 
+Local server runbook: [RUNBOOK.md](./RUNBOOK.md)
+
 ### Contributing
 If you like what you see here, and want to help support the work being done, you could:
 + Report Bugs

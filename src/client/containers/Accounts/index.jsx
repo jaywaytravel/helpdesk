@@ -42,6 +42,7 @@ class AccountsContainer extends React.Component {
   @observable initialLoad = true
   @observable hasMore = true
   @observable pageStart = -1
+  @observable loadingPage = false
 
   constructor (props) {
     super(props)
@@ -84,10 +85,31 @@ class AccountsContainer extends React.Component {
   }
 
   getUsersWithPage (page) {
+    if (this.loadingPage || !this.hasMore) return Promise.resolve()
+
+    this.loadingPage = true
     this.hasMore = false
-    this.props.fetchAccounts({ page, limit: 25, type: this.props.view, showDeleted: true }).then(({ response }) => {
-      this.hasMore = response.count >= 25
-    })
+    return this.props
+      .fetchAccounts({ page, limit: 25, type: this.props.view, showDeleted: true })
+      .then(({ response }) => {
+        this.hasMore = response.count >= 25
+
+        return response
+      })
+      .catch(error => {
+        this.hasMore = true
+        throw error
+      })
+      .then(
+        response => {
+          this.loadingPage = false
+          return response
+        },
+        error => {
+          this.loadingPage = false
+          throw error
+        }
+      )
   }
 
   onSearchKeyUp (e) {
