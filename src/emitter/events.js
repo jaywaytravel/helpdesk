@@ -116,7 +116,7 @@ function formatDateToGMT (isoDateString) {
                   if (process.env.SUPPORT_EMAIL) {
                     recipient = [process.env.SUPPORT_EMAIL]
                   } else {
-                    recipient = ['helpdesk@jaywaytravel.com']
+                    recipient = ['support@jaywaytravel.com']
                   }
 
                   emails.push(recipient)
@@ -271,7 +271,7 @@ function formatDateToGMT (isoDateString) {
                   if (process.env.SUPPORT_EMAIL) {
                     recipient = [process.env.SUPPORT_EMAIL]
                   } else {
-                    recipient = ['helpdesk@jaywaytravel.com']
+                    recipient = ['support@jaywaytravel.com']
                   }
 
                   emails.push(recipient)

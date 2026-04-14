@@ -470,17 +470,25 @@ TicketsContainer.defaultProps = {
   nextEnabled: true
 }
 
-const mapStateToProps = state => ({
-  tickets: state.ticketsState.tickets,
-  totalCount: state.ticketsState.totalCount,
-  prevPage: state.ticketsState.prevPage,
-  nextPage: state.ticketsState.nextPage,
-  loading: state.ticketsState.loading,
-  common: state.common,
-  socket: state.shared.socket,
-  ticketStatuses: state.ticketsState.ticketStatuses,
-  fetchTicketStatus: PropTypes.func.isRequired
-})
+const mapStateToProps = (state, ownProps) => {
+  const currentPage = Number(ownProps.page || 0)
+  const prevPage = Number(state.ticketsState.prevPage)
+  const nextPage = Number(state.ticketsState.nextPage)
+
+  return {
+    tickets: state.ticketsState.tickets,
+    totalCount: state.ticketsState.totalCount,
+    prevPage,
+    nextPage,
+    prevEnabled: prevPage !== currentPage,
+    nextEnabled: nextPage !== currentPage,
+    loading: state.ticketsState.loading,
+    common: state.common,
+    socket: state.shared.socket,
+    ticketStatuses: state.ticketsState.ticketStatuses,
+    fetchTicketStatus: PropTypes.func.isRequired
+  }
+}
 
 export default connect(mapStateToProps, {
   fetchTickets,

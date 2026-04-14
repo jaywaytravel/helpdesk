@@ -915,7 +915,7 @@ function buildQueryWithObject (SELF, grpId, object, count) {
     )
 
   let query
-  if (count) query = SELF.model(COLLECTION).countDocuments({ groups: { $in: grpId }, deleted: false })
+  if (count) query = SELF.model(COLLECTION).countDocuments({ group: { $in: grpId }, deleted: false })
   else {
     query = SELF.model(COLLECTION)
       .find({ group: { $in: grpId }, deleted: false })
@@ -929,7 +929,7 @@ function buildQueryWithObject (SELF, grpId, object, count) {
   }
 
   // Query with Limit?
-  if (limit !== -1) query.skip(page * limit).limit(limit)
+  if (!count && limit !== -1) query.skip(page * limit).limit(limit)
   // Status Query
   if (_.isArray(_status) && _status.length > 0) {
     query.where({ status: { $in: _status } })

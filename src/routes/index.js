@@ -183,7 +183,7 @@ function mainRoutes (router, middleware, controllers) {
     '/tickets/closed/page/:page',
     middleware.redirectToLogin,
     middleware.loadCommonData,
-    controllers.tickets.getByStatus,
+    controllers.tickets.getClosed,
     controllers.tickets.processor
   )
   router.get(

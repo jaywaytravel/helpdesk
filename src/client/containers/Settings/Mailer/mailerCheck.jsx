@@ -35,6 +35,10 @@ class Mailer_MailerCheck extends React.Component {
       mailerCheckPort: '',
       mailerCheckUsername: '',
       mailerCheckPassword: '',
+      mailerCheckOAuth2: '',
+      mailerCheckOAuth2ClientId: '',
+      mailerCheckOAuth2ClientSecret: '',
+      mailerCheckOAuth2RefreshToken: '',
       mailerCheckSelfSign: '',
       mailerCheckPolling: '',
       mailerCheckCreateAccount: '',
@@ -66,6 +70,17 @@ class Mailer_MailerCheck extends React.Component {
         stateObj.mailerCheckUsername = nextProps.settings.getIn(['settings', 'mailerCheckUsername', 'value']) || ''
       if (!state.mailerCheckPassword)
         stateObj.mailerCheckPassword = nextProps.settings.getIn(['settings', 'mailerCheckPassword', 'value']) || ''
+      if (state.mailerCheckOAuth2 === '')
+        stateObj.mailerCheckOAuth2 = nextProps.settings.getIn(['settings', 'mailerCheckOAuth2', 'value']) || false
+      if (!state.mailerCheckOAuth2ClientId)
+        stateObj.mailerCheckOAuth2ClientId =
+          nextProps.settings.getIn(['settings', 'mailerCheckOAuth2ClientId', 'value']) || ''
+      if (!state.mailerCheckOAuth2ClientSecret)
+        stateObj.mailerCheckOAuth2ClientSecret =
+          nextProps.settings.getIn(['settings', 'mailerCheckOAuth2ClientSecret', 'value']) || ''
+      if (!state.mailerCheckOAuth2RefreshToken)
+        stateObj.mailerCheckOAuth2RefreshToken =
+          nextProps.settings.getIn(['settings', 'mailerCheckOAuth2RefreshToken', 'value']) || ''
       if (state.mailerCheckSelfSign === '')
         stateObj.mailerCheckSelfSign = nextProps.settings.getIn(['settings', 'mailerCheckSelfSign', 'value']) || ''
       if (state.mailerCheckPolling === '')
@@ -127,6 +142,10 @@ class Mailer_MailerCheck extends React.Component {
       { name: 'mailer:check:port', value: this.state.mailerCheckPort },
       { name: 'mailer:check:username', value: this.state.mailerCheckUsername },
       { name: 'mailer:check:password', value: this.state.mailerCheckPassword },
+      { name: 'mailer:check:oauth2', value: this.state.mailerCheckOAuth2 },
+      { name: 'mailer:check:oauthclientid', value: this.state.mailerCheckOAuth2ClientId },
+      { name: 'mailer:check:oauthclientsecret', value: this.state.mailerCheckOAuth2ClientSecret },
+      { name: 'mailer:check:oauthrefreshtoken', value: this.state.mailerCheckOAuth2RefreshToken },
       { name: 'mailer:check:selfsign', value: this.state.mailerCheckSelfSign },
       { name: 'mailer:check:ticketype', value: this.state.mailerCheckTicketType },
       { name: 'mailer:check:ticketpriority', value: this.state.mailerCheckTicketPriority },
@@ -271,7 +290,63 @@ class Mailer_MailerCheck extends React.Component {
                 name={'mailerCheckPassword'}
                 value={this.state.mailerCheckPassword}
                 onChange={e => this.onInputValueChanged(e, 'mailerCheckPassword')}
-                disabled={!this.getSetting('mailerCheckEnabled')}
+                disabled={!this.getSetting('mailerCheckEnabled') || this.state.mailerCheckOAuth2}
+              />
+            </div>
+            <div className='uk-clearfix uk-margin-medium-bottom'>
+              <div className='uk-float-left'>
+                <h6 style={{ padding: 0, margin: '5px 0 0 0', fontSize: '16px', lineHeight: '14px' }}>
+                  Use Gmail OAuth2
+                </h6>
+                <h5
+                  style={{ padding: '0 0 10px 0', margin: '2px 0 0 0', fontSize: '12px' }}
+                  className={'uk-text-muted'}
+                >
+                  Use OAuth2 refresh-token authentication for Gmail or Google Workspace mailboxes.
+                </h5>
+              </div>
+              <div className='uk-float-right'>
+                <EnableSwitch
+                  label={'Enable'}
+                  stateName={'mailerCheckOAuth2'}
+                  checked={this.state.mailerCheckOAuth2}
+                  onChange={e => this.onCheckboxChanged(e, 'mailerCheckOAuth2')}
+                  disabled={!this.getSetting('mailerCheckEnabled')}
+                />
+              </div>
+              <hr style={{ float: 'left', marginTop: '10px' }} />
+            </div>
+            <div className='uk-margin-medium-bottom'>
+              <label>OAuth Client ID</label>
+              <input
+                type='text'
+                className={'md-input md-input-width-medium'}
+                name={'mailerCheckOAuth2ClientId'}
+                value={this.state.mailerCheckOAuth2ClientId}
+                onChange={e => this.onInputValueChanged(e, 'mailerCheckOAuth2ClientId')}
+                disabled={!this.getSetting('mailerCheckEnabled') || !this.state.mailerCheckOAuth2}
+              />
+            </div>
+            <div className='uk-margin-medium-bottom'>
+              <label>OAuth Client Secret</label>
+              <input
+                type='password'
+                className={'md-input md-input-width-medium'}
+                name={'mailerCheckOAuth2ClientSecret'}
+                value={this.state.mailerCheckOAuth2ClientSecret}
+                onChange={e => this.onInputValueChanged(e, 'mailerCheckOAuth2ClientSecret')}
+                disabled={!this.getSetting('mailerCheckEnabled') || !this.state.mailerCheckOAuth2}
+              />
+            </div>
+            <div className='uk-margin-medium-bottom'>
+              <label>OAuth Refresh Token</label>
+              <input
+                type='password'
+                className={'md-input md-input-width-medium'}
+                name={'mailerCheckOAuth2RefreshToken'}
+                value={this.state.mailerCheckOAuth2RefreshToken}
+                onChange={e => this.onInputValueChanged(e, 'mailerCheckOAuth2RefreshToken')}
+                disabled={!this.getSetting('mailerCheckEnabled') || !this.state.mailerCheckOAuth2}
               />
             </div>
             <div className='uk-clearfix uk-margin-medium-bottom'>

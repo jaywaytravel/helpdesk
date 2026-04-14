@@ -108,7 +108,7 @@ ticketsV2.get = async (req, res) => {
       totalCount,
       page,
       prevPage: page === 0 ? 0 : page - 1,
-      nextPage: page * limit + limit <= totalCount ? page + 1 : page
+      nextPage: page * limit + limit < totalCount ? page + 1 : page
     })
   } catch (err) {
     logger.warn(err)

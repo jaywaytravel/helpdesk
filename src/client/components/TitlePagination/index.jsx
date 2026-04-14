@@ -15,23 +15,26 @@
 import React from 'react'
 import PropTypes from 'prop-types'
 
-import $ from 'jquery'
-
 class TitlePagination extends React.Component {
-  componentDidMount () {}
-  componentDidUpdate () {
-    $(this.parent).ajaxify()
+  onPageClick (enabled, e) {
+    if (enabled) return
+
+    e.preventDefault()
   }
 
   static formatNumber (num) {
     return num.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ',')
   }
 
-  static calcStartEnd (page, limit) {
+  static calcStartEnd (page, limit, total) {
     page = Number(page)
     limit = Number(limit)
-    const start = page === 0 ? '1' : page * limit
-    const end = page === 0 ? limit : page * limit + limit
+    total = Number(total)
+
+    if (total < 1) return { start: '0', end: '0' }
+
+    const start = page * limit + 1
+    const end = Math.min(page * limit + limit, total)
 
     return { start, end }
   }
@@ -47,7 +50,7 @@ class TitlePagination extends React.Component {
       }
     }
 
-    const startEnd = TitlePagination.calcStartEnd(currentPage, limit)
+    const startEnd = TitlePagination.calcStartEnd(currentPage, limit, total)
 
     return (
       <div className={'pagination uk-float-left uk-clearfix'} ref={r => (this.parent = r)}>
@@ -60,7 +63,9 @@ class TitlePagination extends React.Component {
             <a
               href={prevEnabled ? link(prevPage) : '#'}
               title={'Previous Page'}
-              className={'btn md-btn-wave-light' + (!prevEnabled ? ' no-ajaxy' : '')}
+              className={'btn md-btn-wave-light no-ajaxy' + (!prevEnabled ? ' disabled' : '')}
+              aria-disabled={!prevEnabled}
+              onClick={e => this.onPageClick(prevEnabled, e)}
             >
               <i className='fa fa-large fa-chevron-left' />
             </a>
@@ -69,7 +74,9 @@ class TitlePagination extends React.Component {
             <a
               href={nextEnabled ? link(nextPage) : '#'}
               title={'Next Page'}
-              className={'btn md-btn-wave-light' + (!nextEnabled ? ' no-ajaxy' : '')}
+              className={'btn md-btn-wave-light no-ajaxy' + (!nextEnabled ? ' disabled' : '')}
+              aria-disabled={!nextEnabled}
+              onClick={e => this.onPageClick(nextEnabled, e)}
             >
               <i className='fa fa-large fa-chevron-right' />
             </a>

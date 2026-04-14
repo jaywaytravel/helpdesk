@@ -244,7 +244,7 @@ module.exports = async data => {
     if (process.env.SUPPORT_EMAIL) {
       recipient = [process.env.SUPPORT_EMAIL]
     } else {
-      recipient = ['helpdesk@jaywaytravel.com']
+      recipient = ['support@jaywaytravel.com']
     }
 
     let subscriberEmails = []

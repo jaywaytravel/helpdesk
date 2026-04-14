@@ -25,6 +25,38 @@ const settingUtil = require('../settings/settingsUtil')
 const ES = {}
 ES.indexName = process.env.ELASTICSEARCH_INDEX_NAME || 'trudesk'
 
+const normalizeHost = host => {
+  if (!host) return ''
+
+  const normalized = host.toString().trim()
+  if (!normalized) return ''
+
+  if (normalized.startsWith('http://') || normalized.startsWith('https://')) return normalized
+
+  return `http://${normalized}`
+}
+
+const buildElasticNode = (host, port) => {
+  const normalizedHost = normalizeHost(host)
+  const normalizedPort = port ? port.toString().trim() : ''
+
+  if (!normalizedHost) return 'http://localhost:9200/'
+  if (!normalizedPort) return normalizedHost
+  if (normalizedHost.match(/:\d+\/?$/)) return normalizedHost
+
+  return `${normalizedHost}:${normalizedPort}`
+}
+
+const getElasticNodeFromSettings = async () => {
+  if (process.env.ELASTICSEARCH_URI) return process.env.ELASTICSEARCH_URI
+
+  const response = await settingUtil.getSettings()
+  const settings = response.data.settings
+  if (!settings.elasticSearchConfigured.value) return ''
+
+  return buildElasticNode(settings.elasticSearchHost.value, settings.elasticSearchPort.value)
+}
+
 const checkConnection = callback => {
   const errorText = 'Elasticsearch client not initialized. Restart Trudesk!'
   return new Promise((resolve, reject) => {
@@ -55,8 +87,7 @@ ES.testConnection = async callback => {
     ;(async () => {
       try {
         if (process.env.ELASTICSEARCH_URI) ES.host = process.env.ELASTICSEARCH_URI
-        else ES.host = nconf.get('elasticsearch:host') + ':' + nconf.get('elasticsearch:port')
-        ES.host = 'http://localhost:9200/'
+        else ES.host = buildElasticNode(nconf.get('elasticsearch:host'), nconf.get('elasticsearch:port'))
 
         ES.esclient = new elasticsearch.Client({
           node: ES.host
@@ -204,6 +235,21 @@ ES.buildClient = host => {
   })
 }
 
+ES.ensureClient = async () => {
+  const host = await getElasticNodeFromSettings()
+  if (!host) {
+    global.esStatus = 'Not Configured'
+    throw new Error('Elasticsearch is not configured')
+  }
+
+  if (!ES.esclient || ES.host !== host) {
+    ES.host = host
+    ES.buildClient(host)
+  }
+
+  return ES.esclient
+}
+
 ES.rebuildIndex = async () => {
   if (global.esRebuilding) {
     winston.warn('Index Rebuild attempted while already rebuilding!')
@@ -216,8 +262,9 @@ ES.rebuildIndex = async () => {
 
     const s = settings.data.settings
 
-    // const ELASTICSEARCH_URI = s.elasticSearchHost.value + ':' + s.elasticSearchPort.value
-    ELASTICSEARCH_URI = 'http://localhost:9200/'
+    const ELASTICSEARCH_URI = process.env.ELASTICSEARCH_URI
+      ? process.env.ELASTICSEARCH_URI
+      : buildElasticNode(s.elasticSearchHost.value, s.elasticSearchPort.value)
 
     ES.buildClient(ELASTICSEARCH_URI)
 
@@ -257,18 +304,20 @@ ES.rebuildIndex = async () => {
 
 ES.getIndexCount = async callback => {
   return new Promise((resolve, reject) => {
-    if (_.isUndefined(ES.esclient)) {
-      const error = 'Elasticsearch has not initialized'
+    ;(async () => {
+      try {
+        await ES.ensureClient()
 
-      if (typeof callback === 'function') callback(error)
+        const count = ES.esclient.count({ index: ES.indexName })
+        if (typeof callback === 'function') callback(null, count)
 
-      return reject(error)
-    }
+        return resolve(count)
+      } catch (error) {
+        if (typeof callback === 'function') callback(error)
 
-    const count = ES.esclient.count({ index: ES.indexName })
-    if (typeof callback === 'function') callback(null, count)
-
-    return resolve(count)
+        return reject(error)
+      }
+    })()
   })
 }
 
@@ -293,9 +342,8 @@ ES.init = async callback => {
 
     ES.setupHooks()
 
-    if (process.env.ELATICSEARCH_URI) ES.host = process.env.ELATICSEARCH_URI
-    else ES.host = 'http://localhost:9200/'
-
+    if (process.env.ELASTICSEARCH_URI) ES.host = process.env.ELASTICSEARCH_URI
+    else ES.host = buildElasticNode(settings.elasticSearchHost.value, settings.elasticSearchPort.value)
 
     ES.buildClient(ES.host)
 
@@ -313,6 +361,7 @@ ES.init = async callback => {
 
 ES.checkConnection = async callback => {
   try {
+    await ES.ensureClient()
     await checkConnection()
 
     global.esStatus = 'Connected'
