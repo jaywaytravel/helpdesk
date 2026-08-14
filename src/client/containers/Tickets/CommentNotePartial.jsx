@@ -44,6 +44,12 @@ class CommentNotePartial extends React.Component {
   render () {
     const { ticketSubject, comment, isNote, dateFormat, onEditClick, onRemoveClick } = this.props
     const dateFormatted = helpers.formatDate(comment.date, dateFormat)
+    const isResolved = this.props.ticketStatus
+      ? typeof this.props.ticketStatus.get === 'function'
+        ? this.props.ticketStatus.get('isResolved')
+        : this.props.ticketStatus.isResolved
+      : undefined
+
     return (
       <div className='ticket-comment'>
         <Avatar image={comment.owner.image} userId={comment.owner._id} />
@@ -65,7 +71,7 @@ class CommentNotePartial extends React.Component {
             {!isNote && <Fragment>{ReactHtmlParser(comment.comment)}</Fragment>}
           </div>
         </div>
-        {this.props.ticketStatus.get('isResolved') === false && (
+        {isResolved === false && (
           <div className='comment-actions'>
             {helpers.hasPermOverRole(comment.owner.role, null, 'comments:delete', true) && (
               <div className='remove-comment' onClick={onRemoveClick}>
@@ -85,7 +91,7 @@ class CommentNotePartial extends React.Component {
 }
 
 CommentNotePartial.propTypes = {
-  ticketStatus: PropTypes.object.isRequired,
+  ticketStatus: PropTypes.object,
   ticketSubject: PropTypes.string.isRequired,
   comment: PropTypes.object.isRequired,
   dateFormat: PropTypes.string.isRequired,

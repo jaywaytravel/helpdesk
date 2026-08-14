@@ -123,14 +123,20 @@ class IssuePartial extends React.Component {
   }
 
   render () {
+    const owner = this.owner || this.props.owner || {}
+    const status = this.status || this.props.status
+    const isResolved = status ? (typeof status.get === 'function' ? status.get('isResolved') : status.isResolved) : undefined
+    const canEditIssue =
+      isResolved === false && owner.role && helpers.hasPermOverRole(owner.role, null, 'tickets:update', true)
+
     return (
       <div className='initial-issue uk-clearfix'>
-        <Avatar image={this.owner.image} userId={this.owner._id} />
+        <Avatar image={owner.image} userId={owner._id} />
         {/* Issue */}
         <div className='issue-text'>
           <h3 className='subject-text'>{this.subject}</h3>
-          <a href={`mailto:${this.owner.email}`}>
-            {this.owner.fullname} &lt;{this.owner.email}&gt;
+          <a href={`mailto:${owner.email || ''}`}>
+            {owner.fullname || ''} &lt;{owner.email || ''}&gt;
           </a>
           <br />
           <time dateTime={helpers.formatDate(this.props.date, 'YYYY-MM-DD HH:mm')}>
@@ -145,7 +151,7 @@ class IssuePartial extends React.Component {
                   <a href={attachment.path} className='no-ajaxy' rel='noopener noreferrer' target='_blank'>
                     {attachment.name}
                   </a>
-                  {this.status.get('isResolved') === false && (
+                  {isResolved === false && (
                     <a
                       role='button'
                       className={'remove-attachment'}
@@ -162,8 +168,7 @@ class IssuePartial extends React.Component {
           </div>
         </div>
         {/* Permissions on Fragment for edit */}
-        {this.status.get('isResolved') === false &&
-          helpers.hasPermOverRole(this.props.owner.role, null, 'tickets:update', true) && (
+        {canEditIssue && (
             <Fragment>
               <div
                 className={'edit-issue'}
@@ -205,8 +210,8 @@ class IssuePartial extends React.Component {
 
 IssuePartial.propTypes = {
   ticketId: PropTypes.string.isRequired,
-  status: PropTypes.object.isRequired,
-  owner: PropTypes.object.isRequired,
+  status: PropTypes.object,
+  owner: PropTypes.object,
   subject: PropTypes.string.isRequired,
   issue: PropTypes.string.isRequired,
   date: PropTypes.string.isRequired,

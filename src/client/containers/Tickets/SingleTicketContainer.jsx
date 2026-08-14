@@ -14,7 +14,7 @@
 import React, { Fragment, createRef } from 'react'
 import PropTypes from 'prop-types'
 import { connect } from 'react-redux'
-import { observable, computed, makeObservable, toJS } from 'mobx'
+import { observable, computed, makeObservable } from 'mobx'
 import { observer } from 'mobx-react'
 import sortBy from 'lodash/sortBy'
 import union from 'lodash/union'
@@ -62,7 +62,6 @@ import axios from 'axios'
 import helpers from 'lib/helpers'
 import Log from '../../logger'
 import UIkit from 'uikit'
-import moment from 'moment'
 import SpinLoader from 'components/SpinLoader'
 
 const fetchTicket = parent => {
@@ -71,12 +70,11 @@ const fetchTicket = parent => {
     .then(res => {
       // setTimeout(() => {
       parent.ticket = res.data.ticket
-      parent.isSubscribed =
-        parent.ticket && parent.ticket.subscribers.findIndex(i => i._id === parent.props.shared.sessionUser._id) !== -1
+      parent.syncSubscriptionState()
       // }, 3000)
     })
     .catch(error => {
-      if (error.response.status === 403) {
+      if (error.response && error.response.status === 403) {
         History.pushState(null, null, '/tickets')
       }
       Log.error(error)
@@ -118,6 +116,7 @@ class SingleTicketContainer extends React.Component {
 
   @computed
   get notesTagged () {
+    if (!this.ticket || !Array.isArray(this.ticket.notes)) return []
     this.ticket.notes.forEach(i => (i.isNote = true))
 
     return this.ticket.notes
@@ -125,11 +124,12 @@ class SingleTicketContainer extends React.Component {
 
   @computed get commentsAndNotes () {
     if (!this.ticket) return []
+    const comments = Array.isArray(this.ticket.comments) ? this.ticket.comments : []
     if (!helpers.canUser('tickets:notes', true)) {
-      return sortBy(this.ticket.comments, 'date')
+      return sortBy(comments, 'date')
     }
 
-    let commentsAndNotes = union(this.ticket.comments, this.notesTagged)
+    let commentsAndNotes = union(comments, this.notesTagged)
     commentsAndNotes = sortBy(commentsAndNotes, 'date')
 
     return commentsAndNotes
@@ -137,7 +137,23 @@ class SingleTicketContainer extends React.Component {
 
   @computed get hasCommentsOrNotes () {
     if (!this.ticket) return false
-    return this.ticket.comments.length > 0 || this.ticket.notes.length > 0
+    const comments = Array.isArray(this.ticket.comments) ? this.ticket.comments : []
+    const notes = Array.isArray(this.ticket.notes) ? this.ticket.notes : []
+
+    return comments.length > 0 || notes.length > 0
+  }
+
+  syncSubscriptionState () {
+    const sessionUser = this.props.shared.sessionUser
+    const subscribers = this.ticket && Array.isArray(this.ticket.subscribers) ? this.ticket.subscribers : []
+
+    if (!sessionUser || !this.ticket) {
+      if (this.isSubscribed !== false) this.isSubscribed = false
+      return
+    }
+
+    const isSubscribed = subscribers.findIndex(i => i._id === sessionUser._id) !== -1
+    if (this.isSubscribed !== isSubscribed) this.isSubscribed = isSubscribed
   }
 
   componentDidMount () {
@@ -160,6 +176,8 @@ class SingleTicketContainer extends React.Component {
   componentDidUpdate () {
     helpers.resizeFullHeight()
     helpers.setupScrollers()
+
+    this.syncSubscriptionState()
   }
 
   componentWillUnmount () {
@@ -176,53 +194,57 @@ class SingleTicketContainer extends React.Component {
   }
 
   onUpdateTicket (data) {
-    if (this.ticket._id === data._id) {
+    if (this.ticket && this.ticket._id === data._id) {
       this.ticket = data
+      this.syncSubscriptionState()
     }
   }
 
   onSocketUpdateComments (data) {
-    if (this.ticket._id === data._id) this.ticket.comments = data.comments
+    if (this.ticket && this.ticket._id === data._id) this.ticket.comments = data.comments
   }
 
   onUpdateTicketNotes (data) {
-    if (this.ticket._id === data._id) this.ticket.notes = data.notes
+    if (this.ticket && this.ticket._id === data._id) this.ticket.notes = data.notes
   }
 
   onUpdateAssignee (data) {
-    if (this.ticket._id === data._id) {
+    if (this.ticket && this.ticket._id === data._id) {
       this.ticket.assignee = data.assignee
-      if (this.ticket.assignee && this.ticket.assignee._id === this.props.shared.sessionUser._id)
+      if (this.ticket.assignee && this.props.shared.sessionUser && this.ticket.assignee._id === this.props.shared.sessionUser._id)
         this.isSubscribed = true
     }
   }
 
   onUpdateTicketType (data) {
-    if (this.ticket._id === data._id) this.ticket.type = data.type
+    if (this.ticket && this.ticket._id === data._id) this.ticket.type = data.type
   }
 
   onUpdateTicketPriority (data) {
-    if (this.ticket._id === data._id) this.ticket.priority = data.priority
+    if (this.ticket && this.ticket._id === data._id) this.ticket.priority = data.priority
   }
 
   onUpdateTicketGroup (data) {
     console.log('data ::: ', data)
 
-    if (this.ticket._id === data._id) this.ticket.group = data.group
+    if (this.ticket && this.ticket._id === data._id) this.ticket.group = data.group
   }
 
   onUpdateTicketSubscribers (data) {
     console.log('data ::: ', data)
 
-    if (this.ticket._id === data._id) this.ticket.subscribers = data.subscribers
+    if (this.ticket && this.ticket._id === data._id) {
+      this.ticket.subscribers = data.subscribers
+      this.syncSubscriptionState()
+    }
   }
 
   onUpdateTicketDueDate (data) {
-    if (this.ticket._id === data._id) this.ticket.dueDate = data.dueDate
+    if (this.ticket && this.ticket._id === data._id) this.ticket.dueDate = data.dueDate
   }
 
   onUpdateTicketTags (data) {
-    if (this.ticket._id === data._id) this.ticket.tags = data.tags
+    if (this.ticket && this.ticket._id === data._id) this.ticket.tags = data.tags
   }
 
   onCommentNoteSubmit (e, type) {
@@ -258,6 +280,8 @@ class SingleTicketContainer extends React.Component {
   }
 
   onSubscriberChanged (e) {
+    if (!this.props.shared.sessionUser || !this.ticket) return
+
     axios
       .put(`/api/v1/tickets/${this.ticket._id}/subscribe`, {
         user: this.props.shared.sessionUser._id,
@@ -306,6 +330,13 @@ class SingleTicketContainer extends React.Component {
   }
 
   render () {
+    const sessionUser = this.props.shared.sessionUser
+    const ticketComments = this.ticket && Array.isArray(this.ticket.comments) ? this.ticket.comments : []
+    const ticketNotes = this.ticket && Array.isArray(this.ticket.notes) ? this.ticket.notes : []
+    const ticketSubscribers = this.ticket && Array.isArray(this.ticket.subscribers) ? this.ticket.subscribers : []
+    const ticketHistory = this.ticket && Array.isArray(this.ticket.history) ? this.ticket.history : []
+    const ticketStatusId = this.ticket && this.ticket.status ? this.ticket.status._id : null
+
     const mappedGroups = this.props.groupsState
       ? this.props.groupsState.groups.map(group => {
           return { text: group.get('name'), value: group.get('_id') }
@@ -325,7 +356,7 @@ class SingleTicketContainer extends React.Component {
           ).values()
         )
       : []
-    const mappedSubscribers = this.ticket?.subscribers.map(i => i._id)
+    const mappedSubscribers = ticketSubscribers.map(i => i._id)
 
     const mappedTypes = this.props.ticketTypes
       ? this.props.ticketTypes.map(type => {
@@ -346,8 +377,11 @@ class SingleTicketContainer extends React.Component {
     }))
 
     // Perms
-    const hasTicketUpdate = this.ticket && this.ticket.status.isResolved === false && helpers.canUser('tickets:update')
-    const statusObj = this.ticket ? this.props.ticketStatuses.find(s => s.get('_id') === this.ticket.status._id) : null
+    const statusObj = ticketStatusId ? this.props.ticketStatuses.find(s => s.get('_id') === ticketStatusId) : null
+    const ticketIsResolved = statusObj ? statusObj.get('isResolved') : this.ticket && this.ticket.status
+      ? this.ticket.status.isResolved
+      : undefined
+    const hasTicketUpdate = this.ticket && ticketIsResolved === false && helpers.canUser('tickets:update')
 
     const hasTicketStatusUpdate = () => {
       const isAgent = this.props.sessionUser ? this.props.sessionUser.role.isAgent : false
@@ -373,7 +407,7 @@ class SingleTicketContainer extends React.Component {
                   <p>Ticket #{this.ticket.uid}</p>
                   <StatusSelector
                     ticketId={this.ticket._id}
-                    status={this.ticket.status._id}
+                    status={ticketStatusId}
                     socket={this.props.socket}
                     onStatusChange={status => {
                       this.ticket.status = status
@@ -552,7 +586,7 @@ class SingleTicketContainer extends React.Component {
                           )}
                           {!hasTicketUpdate && (
                             <div className={'input-box'}>
-                              {this.ticket.subscribers.map(it => it.fullname).join(', ')}
+                              {ticketSubscribers.map(it => it.fullname).join(', ')}
                             </div>
                           )}
                         </div>
@@ -604,7 +638,7 @@ class SingleTicketContainer extends React.Component {
                           <hr style={{ padding: 0, margin: 0 }} />
                           <div className='history-items scrollable' style={{ paddingTop: 12 }}>
                             {this.ticket.history &&
-                              this.ticket.history.map(item => (
+                              ticketHistory.map(item => (
                                 <div key={item._id} className='history-item'>
                                   <time
                                     dateTime={helpers.formatDate(item.date, this.props.common.get('longDateFormat'))}
@@ -704,14 +738,14 @@ class SingleTicketContainer extends React.Component {
                             selectorId={1}
                             label='Comments'
                             showBadge={true}
-                            badgeText={this.ticket ? this.ticket.comments && this.ticket.comments.length : 0}
+                            badgeText={ticketComments.length}
                           />
                           {helpers.canUser('tickets:notes', true) && (
                             <TruTabSelector
                               selectorId={2}
                               label='Notes'
                               showBadge={true}
-                              badgeText={this.ticket ? this.ticket.notes && this.ticket.notes.length : 0}
+                              badgeText={ticketNotes.length}
                             />
                           )}
                         </TruTabSelectors>
@@ -757,7 +791,7 @@ class SingleTicketContainer extends React.Component {
                         <TruTabSection sectionId={1}>
                           <div className='comments'>
                             {this.ticket &&
-                              this.ticket.comments.map(comment => (
+                              ticketComments.map(comment => (
                                 <CommentNotePartial
                                   key={comment._id}
                                   ticketStatus={statusObj}
@@ -794,7 +828,7 @@ class SingleTicketContainer extends React.Component {
                         <TruTabSection sectionId={2}>
                           <div className='notes'>
                             {this.ticket &&
-                              this.ticket.notes.map(note => (
+                              ticketNotes.map(note => (
                                 <CommentNotePartial
                                   key={note._id}
                                   ticketStatus={statusObj}
@@ -833,10 +867,11 @@ class SingleTicketContainer extends React.Component {
                     )}
 
                     {/* Comment / Notes Form */}
-                    {this.ticket.status.isResolved === false &&
+                    {ticketIsResolved === false &&
+                      sessionUser &&
                       (helpers.canUser('comments:create', true) || helpers.canUser('tickets:notes', true)) && (
                         <div className='uk-width-1-1 ticket-reply uk-clearfix'>
-                          <Avatar image={this.props.shared.sessionUser.image} showOnlineBubble={false} />
+                          <Avatar image={sessionUser.image} showOnlineBubble={false} />
                           <TruTabWrapper style={{ paddingLeft: 85 }}>
                             <TruTabSelectors showTrack={false}>
                               {helpers.canUser('comments:create', true) && (
