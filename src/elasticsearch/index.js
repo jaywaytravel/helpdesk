@@ -17,7 +17,6 @@ const path = require('path')
 const nconf = require('nconf')
 const winston = require('../logger')
 const elasticsearch = require('@elastic/elasticsearch')
-const ESErrors = require('@elastic/elasticsearch').errors
 const emitter = require('../emitter')
 const moment = require('moment-timezone')
 const settingUtil = require('../settings/settingsUtil')
@@ -231,6 +230,7 @@ ES.buildClient = host => {
   ES.esclient = new elasticsearch.Client({
     node: host,
     pingTimeout: 10000,
+    requestTimeout: 10000,
     maxRetries: 5
   })
 }
@@ -371,6 +371,8 @@ ES.checkConnection = async callback => {
     global.esStatus = 'Error'
     winston.warn(e)
     if (typeof callback === 'function') return callback()
+
+    throw e
   }
 }
 

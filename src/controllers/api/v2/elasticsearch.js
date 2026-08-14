@@ -13,7 +13,6 @@
  */
 
 const _ = require('lodash')
-const async = require('async')
 const winston = require('../../../logger')
 const es = require('../../../elasticsearch')
 const ticketSchema = require('../../../models/ticket')
@@ -58,7 +57,7 @@ apiElasticSearch.status = async (req, res) => {
         })()
       })
 
-    const [__, indexCount, ticketCount] = await Promise.all([es.checkConnection(), getIndexCountData(), getDBCount()])
+    const [, indexCount, ticketCount] = await Promise.all([es.checkConnection(), getIndexCountData(), getDBCount()])
     response.indexCount = indexCount
     response.dbCount = ticketCount
     response.esStatus = global.esStatus
@@ -74,78 +73,108 @@ apiElasticSearch.status = async (req, res) => {
 }
 
 apiElasticSearch.search = function (req, res) {
-  var limit = !_.isUndefined(req.query['limit']) ? req.query.limit : 100
+  let limit = !_.isUndefined(req.query.limit) ? req.query.limit : 100
   try {
     limit = parseInt(limit)
   } catch (e) {
     limit = 100
   }
 
-  async.waterfall(
-    [
-      function (next) {
-        if (!req.user.role.isAdmin && !req.user.role.isAgent)
-          return groupSchema.getAllGroupsOfUserNoPopulate(req.user._id, next)
+  const query = _.trim(req.query.q || '')
+  if (!query) return res.send({ took: 0, timed_out: false, hits: { total: { value: 0, relation: 'eq' }, hits: [] } })
 
-        var Department = require('../../../models/department')
-        return Department.getDepartmentGroupsOfUser(req.user._id, next)
-      },
-      function (groups, next) {
-        var g = _.map(groups, function (i) {
-          return i._id
+  const getGroups = () =>
+    new Promise((resolve, reject) => {
+      if (!req.user.role.isAdmin && !req.user.role.isAgent) {
+        return groupSchema.getAllGroupsOfUserNoPopulate(req.user._id, function (err, groups) {
+          if (err) return reject(err)
+          return resolve(groups)
         })
-        // For docker we need to add a unique ID for the index.
-        var obj = {
-          index: es.indexName,
-          body: {
-            size: limit,
-            from: 0,
-            query: {
-              bool: {
-                must: {
-                  multi_match: {
-                    query: req.query['q'],
-                    type: 'cross_fields',
-                    operator: 'and',
-                    fields: [
-                      'uid^5',
-                      'subject^4',
-                      'issue^4',
-                      'owner.fullname',
-                      'owner.username',
-                      'owner.email',
-                      'comments.owner.email',
-                      'tags.normalized',
-                      'priority.name',
-                      'type.name',
-                      'group.name',
-                      'comments.comment^3',
-                      'notes.note^3',
-                      'dateFormatted'
-                    ],
-                    tie_breaker: 0.3
-                  }
-                },
-                filter: {
-                  terms: { 'group._id': g }
+      }
+
+      const Department = require('../../../models/department')
+      return Department.getDepartmentGroupsOfUser(req.user._id, function (err, groups) {
+        if (err) return reject(err)
+        return resolve(groups)
+      })
+    })
+
+  ;(async () => {
+    try {
+      await es.checkConnection()
+
+      const groups = await getGroups()
+      const g = _.map(groups, function (i) {
+        return i._id
+      })
+
+      // For docker we need to add a unique ID for the index.
+      const obj = {
+        index: es.indexName,
+        body: {
+          size: limit,
+          from: 0,
+          query: {
+            bool: {
+              must: {
+                multi_match: {
+                  query,
+                  type: 'cross_fields',
+                  operator: 'and',
+                  fields: [
+                    'uid^5',
+                    'subject^4',
+                    'issue^4',
+                    'owner.fullname',
+                    'owner.username',
+                    'owner.email',
+                    'comments.owner.email',
+                    'tags.normalized',
+                    'priority.name',
+                    'ticketType.name',
+                    'typeTicket.name',
+                    'type.name',
+                    'group.name',
+                    'comments.comment^3',
+                    'notes.note^3',
+                    'dateFormatted'
+                  ],
+                  tie_breaker: 0.3
                 }
+              },
+              filter: {
+                terms: { 'group._id': g }
               }
             }
           }
         }
-
-        return next(null, obj)
       }
-    ],
-    function (err, obj) {
-      if (err) return apiUtil.sendApiError(res, 500, err.message)
-      if (!es || !es.esclient) return apiUtil.sendApiError(res, 400, 'Elasticsearch is not configured')
 
-      es.esclient.search(obj).then(function (r) {
-        return res.send(r)
-      })
+      const result = await es.esclient.search(obj)
+
+      return res.send(result)
+    } catch (err) {
+      winston.warn(err)
+
+      const statusCode = err?.meta?.statusCode || 500
+      const errorType = err?.meta?.body?.error?.type
+      const errorReason = err?.meta?.body?.error?.reason
+
+      if (errorType === 'index_not_found_exception') {
+        return apiUtil.sendApiError(
+          res,
+          404,
+          `Elasticsearch index "${es.indexName}" was not found. Rebuild the index in Settings > Elasticsearch.`
+        )
+      }
+
+      if (err.message === 'Elasticsearch client not initialized. Restart Trudesk!') {
+        return apiUtil.sendApiError(res, 400, 'Elasticsearch is not configured')
+      }
+
+      return apiUtil.sendApiError(res, statusCode, errorReason || err.message)
     }
-  )
+  })()
 }
 
 module.exports = apiElasticSearch
