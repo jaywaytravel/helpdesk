@@ -167,8 +167,8 @@ class CreateAccountModal extends React.Component {
                 value={this.username}
                 onChange={e => this.onInputChanged(e, 'username')}
                 data-validation={'length'}
-                data-validation-length={'min4'}
-                data-validation-error-msg={'Username must contain at least 4 characters.'}
+                data-validation-length={'min3'}
+                data-validation-error-msg={'Username must contain at least 3 characters.'}
               />
             </div>
             <div className='uk-margin-medium-bottom uk-clearfix'>
