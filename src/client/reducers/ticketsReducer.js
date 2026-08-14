@@ -36,6 +36,7 @@ const initialState = {
   totalCount: '',
   viewType: 'active',
   loading: false,
+  currentPage: null,
   nextPage: 1,
   prevPage: 0,
   forms: List([])
@@ -46,7 +47,6 @@ function hasInView (state, view, statusId, assignee, userId, userGroupIds, group
   let hasView = false
   let hasGroup = false
   const unresolvedStatuses = state.ticketStatuses.filter(i => i.get('isResolved') === false)
-  const status = state.ticketStatuses.find(i => i.get('_id') === statusId)
 
   switch (view) {
     case 'filter':
@@ -80,6 +80,7 @@ const reducer = handleActions(
       return {
         ...state,
         viewType: action.payload.type,
+        currentPage: Number(action.payload.page || 0),
         loading: true
       }
     },
@@ -88,6 +89,7 @@ const reducer = handleActions(
       return {
         ...state,
         tickets: fromJS(action.response.tickets || []),
+        currentPage: Number(action.response.page || 0),
         prevPage: fromJS(action.response.prevPage),
         nextPage: fromJS(action.response.nextPage),
         totalCount: action.response.totalCount

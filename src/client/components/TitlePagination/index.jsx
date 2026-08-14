@@ -16,10 +16,19 @@ import React from 'react'
 import PropTypes from 'prop-types'
 
 class TitlePagination extends React.Component {
-  onPageClick (enabled, e) {
-    if (enabled) return
+  onPageClick (enabled, page, href, e) {
+    if (!enabled) {
+      e.preventDefault()
+      return
+    }
 
-    e.preventDefault()
+    const isModifiedClick = e.metaKey || e.ctrlKey || e.shiftKey || e.altKey || e.button === 1
+    if (isModifiedClick) return
+
+    if (typeof this.props.onPageChange === 'function') {
+      e.preventDefault()
+      this.props.onPageChange(page, href)
+    }
   }
 
   static formatNumber (num) {
@@ -65,7 +74,7 @@ class TitlePagination extends React.Component {
               title={'Previous Page'}
               className={'btn md-btn-wave-light no-ajaxy' + (!prevEnabled ? ' disabled' : '')}
               aria-disabled={!prevEnabled}
-              onClick={e => this.onPageClick(prevEnabled, e)}
+              onClick={e => this.onPageClick(prevEnabled, prevPage, link(prevPage), e)}
             >
               <i className='fa fa-large fa-chevron-left' />
             </a>
@@ -76,7 +85,7 @@ class TitlePagination extends React.Component {
               title={'Next Page'}
               className={'btn md-btn-wave-light no-ajaxy' + (!nextEnabled ? ' disabled' : '')}
               aria-disabled={!nextEnabled}
-              onClick={e => this.onPageClick(nextEnabled, e)}
+              onClick={e => this.onPageClick(nextEnabled, nextPage, link(nextPage), e)}
             >
               <i className='fa fa-large fa-chevron-right' />
             </a>
@@ -94,9 +103,10 @@ TitlePagination.propTypes = {
   filter: PropTypes.object,
   prevEnabled: PropTypes.bool.isRequired,
   nextEnabled: PropTypes.bool.isRequired,
-  currentPage: PropTypes.string,
+  currentPage: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
   prevPage: PropTypes.number,
-  nextPage: PropTypes.number
+  nextPage: PropTypes.number,
+  onPageChange: PropTypes.func
 }
 
 TitlePagination.defaultProps = {

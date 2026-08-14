@@ -61,6 +61,8 @@ class TicketsContainer extends React.Component {
     this.onTicketCreated = this.onTicketCreated.bind(this)
     this.onTicketUpdated = this.onTicketUpdated.bind(this)
     this.onTicketDeleted = this.onTicketDeleted.bind(this)
+    this.loadTickets = this.loadTickets.bind(this)
+    this.onPageChange = this.onPageChange.bind(this)
   }
 
   componentDidMount () {
@@ -68,7 +70,7 @@ class TicketsContainer extends React.Component {
     this.props.socket.on('$trudesk:client:ticket:updated', this.onTicketUpdated)
     this.props.socket.on('$trudesk:client:ticket:deleted', this.onTicketDeleted)
 
-    this.props.fetchTickets({ limit: 50, page: this.props.page, type: this.props.view, filter: this.props.filter })
+    this.loadTickets(this.props.currentPage)
     this.props.fetchTicketStatus()
   }
 
@@ -107,8 +109,19 @@ class TicketsContainer extends React.Component {
     this.props.socket.off('$trudesk:client:ticket:deleted', this.onTicketDeleted)
   }
 
+  loadTickets (page) {
+    const nextPage = Number(page)
+
+    this.props.fetchTickets({
+      limit: 50,
+      page: Number.isNaN(nextPage) ? 0 : nextPage,
+      type: this.props.view,
+      filter: this.props.filter
+    })
+  }
+
   onTicketCreated (ticket) {
-    if (this.props.page === '0') this.props.ticketEvent({ type: 'created', data: ticket })
+    if (this.props.currentPage === 0) this.props.ticketEvent({ type: 'created', data: ticket })
   }
 
   onTicketUpdated (data) {
@@ -207,6 +220,18 @@ class TicketsContainer extends React.Component {
     else this._clearChecked()
   }
 
+  onPageChange (page, href) {
+    const nextPage = Number(page)
+    if (Number.isNaN(nextPage) || nextPage === this.props.currentPage || this.props.loading) return
+
+    if (this.selectAllCheckbox) this._clearChecked()
+    if (window.history && typeof window.history.pushState === 'function' && href && href !== '#') {
+      window.history.pushState({}, document.title, href)
+    }
+
+    this.loadTickets(nextPage)
+  }
+
   render () {
     const loadingItems = []
     for (let i = 0; i < 51; i++) {
@@ -255,18 +280,17 @@ class TicketsContainer extends React.Component {
                   type={this.props.view}
                   prevEnabled={this.props.prevEnabled}
                   nextEnabled={this.props.nextEnabled}
-                  currentPage={this.props.page}
+                  currentPage={this.props.currentPage}
                   prevPage={this.props.prevPage}
                   nextPage={this.props.nextPage}
                   filter={this.props.filter}
+                  onPageChange={this.onPageChange}
                 />
                 <PageTitleButton
                   fontAwesomeIcon={'fa-refresh'}
                   onButtonClick={e => {
                     e.preventDefault()
-                    this.props
-                      .unloadTickets()
-                      .then(this.props.fetchTickets({ type: this.props.view, page: this.props.page }))
+                    this.loadTickets(this.props.currentPage)
                   }}
                 />
                 <PageTitleButton
@@ -361,10 +385,6 @@ class TicketsContainer extends React.Component {
                     helpers.formatDate(ticket.get('updated'), helpers.getTimeFormat())
                   : '--'
 
-                const dueDate = ticket.get('dueDate')
-                  ? helpers.formatDate(ticket.get('dueDate'), helpers.getShortDateFormat())
-                  : '--'
-
                 const isOverdue = () => {
                   if (!this.props.common.viewdata.get('showOverdue') || [2, 3].indexOf(ticket.get('status')) !== -1)
                     return false
@@ -443,6 +463,7 @@ TicketsContainer.propTypes = {
   socket: PropTypes.object.isRequired,
   view: PropTypes.string.isRequired,
   page: PropTypes.string.isRequired,
+  currentPage: PropTypes.number.isRequired,
   prevPage: PropTypes.number.isRequired,
   nextPage: PropTypes.number.isRequired,
   prevEnabled: PropTypes.bool.isRequired,
@@ -471,11 +492,15 @@ TicketsContainer.defaultProps = {
 }
 
 const mapStateToProps = (state, ownProps) => {
-  const currentPage = Number(ownProps.page || 0)
+  const currentPage =
+    state.ticketsState.currentPage === null || typeof state.ticketsState.currentPage === 'undefined'
+      ? Number(ownProps.page || 0)
+      : Number(state.ticketsState.currentPage)
   const prevPage = Number(state.ticketsState.prevPage)
   const nextPage = Number(state.ticketsState.nextPage)
 
   return {
+    currentPage,
     tickets: state.ticketsState.tickets,
     totalCount: state.ticketsState.totalCount,
     prevPage,
