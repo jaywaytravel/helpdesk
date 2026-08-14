@@ -439,7 +439,9 @@ api.reports.generate = payload => {
 api.search = {}
 api.search.search = ({ limit, term }) => {
   const l = limit || 25
-  return axios.get(`/api/v2/es/search?limit=${l}&q=${term}`).then(res => {
+  const query = encodeURIComponent(term || '')
+
+  return axios.get(`/api/v2/es/search?limit=${l}&q=${query}`).then(res => {
     return res.data
   })
 }

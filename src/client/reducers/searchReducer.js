@@ -27,7 +27,8 @@ const searchReducer = handleActions(
     [FETCH_SEARCH_RESULTS.PENDING]: state => {
       return {
         ...state,
-        loading: true
+        loading: true,
+        error: null
       }
     },
 
@@ -35,6 +36,7 @@ const searchReducer = handleActions(
       return {
         ...state,
         loading: false,
+        error: null,
         results: fromJS(action.response.hits.hits)
       }
     },
@@ -43,7 +45,7 @@ const searchReducer = handleActions(
       return {
         ...state,
         loading: false,
-        error: action.error.response.data
+        error: action.error.response ? action.error.response.data : { error: action.error.message || 'Unknown Error' }
       }
     },
 
@@ -51,6 +53,7 @@ const searchReducer = handleActions(
       return {
         ...state,
         loading: false,
+        error: null,
         results: state.results.clear()
       }
     }
