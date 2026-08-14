@@ -83,6 +83,14 @@ async function createIndex(callback) {
                 min_gram: 1,
                 max_gram: 20
               },
+              english_stemmer: {
+                type: 'stemmer',
+                language: 'english'
+              },
+              english_possessive: {
+                type: 'stemmer',
+                language: 'possessive_english'
+              },
               email: {
                 type: 'pattern_capture',
                 preserve_original: true,
@@ -94,6 +102,11 @@ async function createIndex(callback) {
                 type: 'custom',
                 tokenizer: 'standard',
                 filter: ['lowercase', 'leadahead']
+              },
+              english_text: {
+                type: 'custom',
+                tokenizer: 'standard',
+                filter: ['english_possessive', 'lowercase', 'english_stemmer']
               },
               email: {
                 tokenizer: 'uax_url_email',
@@ -115,12 +128,24 @@ async function createIndex(callback) {
               subject: {
                 type: 'text',
                 analyzer: 'leadahead',
-                search_analyzer: 'standard'
+                search_analyzer: 'standard',
+                fields: {
+                  stemmed: {
+                    type: 'text',
+                    analyzer: 'english_text'
+                  }
+                }
               },
               issue: {
                 type: 'text',
                 analyzer: 'leadahead',
-                search_analyzer: 'standard'
+                search_analyzer: 'standard',
+                fields: {
+                  stemmed: {
+                    type: 'text',
+                    analyzer: 'english_text'
+                  }
+                }
               },
               dateFormatted: {
                 type: 'text',
@@ -132,7 +157,13 @@ async function createIndex(callback) {
                   comment: {
                     type: 'text',
                     analyzer: 'leadahead',
-                    search_analyzer: 'standard'
+                    search_analyzer: 'standard',
+                    fields: {
+                      stemmed: {
+                        type: 'text',
+                        analyzer: 'english_text'
+                      }
+                    }
                   },
                   owner: {
                     properties: {
@@ -149,7 +180,13 @@ async function createIndex(callback) {
                   note: {
                     type: 'text',
                     analyzer: 'leadahead',
-                    search_analyzer: 'standard'
+                    search_analyzer: 'standard',
+                    fields: {
+                      stemmed: {
+                        type: 'text',
+                        analyzer: 'english_text'
+                      }
+                    }
                   },
                   owner: {
                     properties: {

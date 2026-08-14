@@ -123,8 +123,10 @@ apiElasticSearch.search = function (req, res) {
                   operator: 'and',
                   fields: [
                     'uid^5',
-                    'subject^4',
-                    'issue^4',
+                    'subject^5',
+                    'subject.stemmed^5',
+                    'issue^5',
+                    'issue.stemmed^5',
                     'owner.fullname',
                     'owner.username',
                     'owner.email',
@@ -136,7 +138,9 @@ apiElasticSearch.search = function (req, res) {
                     'type.name',
                     'group.name',
                     'comments.comment^3',
+                    'comments.comment.stemmed^3',
                     'notes.note^3',
+                    'notes.note.stemmed^3',
                     'dateFormatted'
                   ],
                   tie_breaker: 0.3
