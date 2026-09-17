@@ -98,10 +98,14 @@ api.tickets.getWithPage = payload => {
   const page = payload.page ? payload.page : 0
   const type = payload.type ? payload.type : 'all'
   const filter = payload.filter ? encodeURIComponent(JSON.stringify(payload.filter, null, 2)) : undefined
-  const fullFilter = filter ? `&filter=${filter}` : undefined
-  return axios.get(`/api/v2/tickets?type=${type}&page=${page}&limit=${limit}${fullFilter}`).then(res => {
-    return res.data
-  })
+  const fullFilter = filter ? `&filter=${filter}` : ''
+  const sortBy = payload.sortBy ? `&sortBy=${encodeURIComponent(payload.sortBy)}` : ''
+  const sortDirection = payload.sortDirection ? `&sortDirection=${encodeURIComponent(payload.sortDirection)}` : ''
+  return axios
+    .get(`/api/v2/tickets?type=${type}&page=${page}&limit=${limit}${fullFilter}${sortBy}${sortDirection}`)
+    .then(res => {
+      return res.data
+    })
 }
 api.tickets.search = payload => {
   return axios.get(`/api/v1/tickets/search/?search=${payload.searchString}&limit=100`).then(res => {

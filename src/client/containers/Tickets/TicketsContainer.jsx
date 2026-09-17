@@ -58,11 +58,17 @@ class TicketsContainer extends React.Component {
     super(props)
     makeObservable(this)
 
+    this.state = {
+      sortBy: null,
+      sortDirection: null
+    }
+
     this.onTicketCreated = this.onTicketCreated.bind(this)
     this.onTicketUpdated = this.onTicketUpdated.bind(this)
     this.onTicketDeleted = this.onTicketDeleted.bind(this)
     this.loadTickets = this.loadTickets.bind(this)
     this.onPageChange = this.onPageChange.bind(this)
+    this.onSort = this.onSort.bind(this)
   }
 
   componentDidMount () {
@@ -116,20 +122,36 @@ class TicketsContainer extends React.Component {
       limit: 50,
       page: Number.isNaN(nextPage) ? 0 : nextPage,
       type: this.props.view,
-      filter: this.props.filter
+      filter: this.props.filter,
+      sortBy: this.state.sortBy,
+      sortDirection: this.state.sortDirection
     })
   }
 
   onTicketCreated (ticket) {
+    if (this.state.sortBy) return this.loadTickets(this.props.currentPage)
     if (this.props.currentPage === 0) this.props.ticketEvent({ type: 'created', data: ticket })
   }
 
   onTicketUpdated (data) {
+    if (this.state.sortBy) return this.loadTickets(this.props.currentPage)
     this.props.ticketUpdated(data)
   }
 
   onTicketDeleted (id) {
+    if (this.state.sortBy) return this.loadTickets(this.props.currentPage)
     this.props.ticketEvent({ type: 'deleted', data: id })
+  }
+
+  onSort (sortBy) {
+    let sortDirection = 'asc'
+    if (this.state.sortBy === sortBy && this.state.sortDirection === 'asc') sortDirection = 'desc'
+    else if (this.state.sortBy === sortBy && this.state.sortDirection === 'desc') {
+      sortBy = null
+      sortDirection = null
+    }
+
+    this.setState({ sortBy, sortDirection }, () => this.loadTickets(0))
   }
 
   onTicketCheckChanged (e, id) {
@@ -350,16 +372,77 @@ class TicketsContainer extends React.Component {
             striped={true}
             headers={[
               <TableHeader key={0} width={45} height={50} component={selectAllCheckbox} />,
-              <TableHeader key={1} width={60} text={'Status'} />,
-              <TableHeader key={2} width={65} text={'#'} />,
-              <TableHeader key={3} width={'23%'} text={'Subject'} />,
-              <TableHeader key={3} width={'13%'} text={'Type'} />,
-              <TableHeader key={4} width={110} text={'Created'} />,
-              <TableHeader key={5} width={125} text={'Requester'} />,
-              <TableHeader key={6} width={175} text={'Customer'} />,
-              <TableHeader key={7} text={'Assignee'} />,
+              <TableHeader
+                key={1}
+                width={78}
+                text={'Status'}
+                sortable={true}
+                sortDirection={this.state.sortBy === 'status' ? this.state.sortDirection : null}
+                onSort={() => this.onSort('status')}
+              />,
+              <TableHeader
+                key={2}
+                width={65}
+                text={'#'}
+                sortable={true}
+                sortDirection={this.state.sortBy === 'uid' ? this.state.sortDirection : null}
+                onSort={() => this.onSort('uid')}
+              />,
+              <TableHeader
+                key={3}
+                width={'23%'}
+                text={'Subject'}
+                sortable={true}
+                sortDirection={this.state.sortBy === 'subject' ? this.state.sortDirection : null}
+                onSort={() => this.onSort('subject')}
+              />,
+              <TableHeader
+                key={4}
+                width={'13%'}
+                text={'Type'}
+                sortable={true}
+                sortDirection={this.state.sortBy === 'type' ? this.state.sortDirection : null}
+                onSort={() => this.onSort('type')}
+              />,
+              <TableHeader
+                key={5}
+                width={110}
+                text={'Created'}
+                sortable={true}
+                sortDirection={this.state.sortBy === 'date' ? this.state.sortDirection : null}
+                onSort={() => this.onSort('date')}
+              />,
+              <TableHeader
+                key={6}
+                width={125}
+                text={'Requester'}
+                sortable={true}
+                sortDirection={this.state.sortBy === 'owner' ? this.state.sortDirection : null}
+                onSort={() => this.onSort('owner')}
+              />,
+              <TableHeader
+                key={7}
+                width={175}
+                text={'Customer'}
+                sortable={true}
+                sortDirection={this.state.sortBy === 'group' ? this.state.sortDirection : null}
+                onSort={() => this.onSort('group')}
+              />,
+              <TableHeader
+                key={8}
+                text={'Assignee'}
+                sortable={true}
+                sortDirection={this.state.sortBy === 'assignee' ? this.state.sortDirection : null}
+                onSort={() => this.onSort('assignee')}
+              />,
               // <TableHeader key={8} width={110} text={'Due Date'} />,
-              <TableHeader key={9} text={'Updated'} />
+              <TableHeader
+                key={9}
+                text={'Updated'}
+                sortable={true}
+                sortDirection={this.state.sortBy === 'updated' ? this.state.sortDirection : null}
+                onSort={() => this.onSort('updated')}
+              />
             ]}
           >
             {!this.props.loading && this.props.tickets.size < 1 && (

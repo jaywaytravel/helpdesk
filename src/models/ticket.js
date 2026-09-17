@@ -1043,6 +1043,84 @@ async function getTicketsSortedByStatusOrder (SELF, grpId, object) {
   return ticketIds.map(ticket => ticketsById.get(ticket._id.toString())).filter(Boolean)
 }
 
+async function getTicketsSortedByColumn (SELF, grpId, object) {
+  const page = object.page || 0
+  const limit = object.limit || 10
+  const direction = object.sortDirection === 'desc' ? -1 : 1
+  const filterObject = Object.assign({}, object, { limit: -1, page: 0, sortBy: undefined })
+  const filterQuery = buildQueryWithObject(SELF, grpId, filterObject)
+
+  filterQuery.cast(SELF)
+
+  const sortDefinitions = {
+    status: { from: 'statuses', localField: 'status', value: '$sortDocument.order', fallback: '$sortDocument.uid' },
+    type: { from: 'tickettypes', localField: 'type', value: '$sortDocument.name', text: true },
+    owner: { from: 'accounts', localField: 'owner', value: '$sortDocument.fullname', text: true },
+    group: { from: 'groups', localField: 'group', value: '$sortDocument.name', text: true },
+    assignee: { from: 'accounts', localField: 'assignee', value: '$sortDocument.fullname', text: true },
+    uid: { value: '$uid' },
+    subject: { value: '$subject', text: true },
+    date: { value: '$date' },
+    updated: { value: '$updated' }
+  }
+  const definition = sortDefinitions[object.sortBy]
+  if (!definition) return getTicketsSortedByStatusOrder(SELF, grpId, object)
+
+  const pipeline = [{ $match: filterQuery.getFilter() }]
+  if (definition.from) {
+    pipeline.push(
+      {
+        $lookup: {
+          from: definition.from,
+          localField: definition.localField,
+          foreignField: '_id',
+          as: 'sortDocuments'
+        }
+      },
+      { $addFields: { sortDocument: { $arrayElemAt: ['$sortDocuments', 0] } } }
+    )
+  }
+
+  const rawSortValue = definition.fallback ? { $ifNull: [definition.value, definition.fallback] } : definition.value
+  let sortValue = rawSortValue
+  if (definition.text) sortValue = { $toLower: { $ifNull: [sortValue, ''] } }
+
+  pipeline.push(
+    {
+      $addFields: {
+        sortValue,
+        sortMissing: { $cond: [{ $eq: [{ $ifNull: [rawSortValue, null] }, null] }, 1, 0] },
+        activityDate: { $ifNull: ['$updated', '$date'] }
+      }
+    }
+  )
+
+  const sort = { sortMissing: 1, sortValue: direction }
+  if (object.sortBy === 'status') sort.activityDate = -1
+  sort.uid = -1
+  sort._id = 1
+  pipeline.push({ $sort: sort })
+
+  if (limit !== -1) pipeline.push({ $skip: page * limit }, { $limit: limit })
+  pipeline.push({ $project: { _id: 1 } })
+
+  const ticketIds = await SELF.aggregate(pipeline).exec()
+  if (ticketIds.length === 0) return []
+
+  const tickets = await SELF.find({ _id: { $in: ticketIds.map(ticket => ticket._id) } })
+    .populate(
+      'owner assignee subscribers comments.owner notes.owner history.owner',
+      'username fullname email role image title'
+    )
+    .populate('assignee', 'username fullname email role image title')
+    .populate('type tags status group')
+    .lean()
+    .exec()
+
+  const ticketsById = new Map(tickets.map(ticket => [ticket._id.toString(), ticket]))
+  return ticketIds.map(ticket => ticketsById.get(ticket._id.toString())).filter(Boolean)
+}
+
 ticketSchema.statics.getTicketsWithObject = async function (grpId, object, callback) {
   const self = this
   return new Promise((resolve, reject) => {
@@ -1050,6 +1128,15 @@ ticketSchema.statics.getTicketsWithObject = async function (grpId, object, callb
       try {
         if (!grpId || !_.isArray(grpId) || !_.isObject(object))
           throw new Error('Invalid parameter in - TicketSchema.GetTicketsWithObject()')
+
+        if (object.sortBy) {
+          const tickets = await getTicketsSortedByColumn(self, grpId, object)
+          if (typeof callback === 'function') {
+            return callback(null, tickets)
+          }
+
+          return resolve(tickets)
+        }
 
         if (object.sortByStatusOrder) {
           const tickets = await getTicketsSortedByStatusOrder(self, grpId, object)

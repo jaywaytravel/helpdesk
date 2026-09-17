@@ -35,6 +35,7 @@ const initialState = {
   priorities: List([]),
   totalCount: '',
   viewType: 'active',
+  sortBy: null,
   loading: false,
   currentPage: null,
   nextPage: 1,
@@ -118,6 +119,7 @@ const reducer = handleActions(
       return {
         ...state,
         viewType: action.payload.type,
+        sortBy: action.payload.sortBy || null,
         currentPage: Number(action.payload.page || 0),
         loading: true
       }
@@ -128,7 +130,9 @@ const reducer = handleActions(
       return {
         ...state,
         tickets:
-          state.viewType === 'active' ? sortTicketsByStatusAndActivity(tickets, state.ticketStatuses) : tickets,
+          state.viewType === 'active' && !state.sortBy
+            ? sortTicketsByStatusAndActivity(tickets, state.ticketStatuses)
+            : tickets,
         currentPage: Number(action.response.page || 0),
         prevPage: fromJS(action.response.prevPage),
         nextPage: fromJS(action.response.nextPage),
@@ -173,9 +177,7 @@ const reducer = handleActions(
           return {
             ...state,
             tickets:
-              state.viewType === 'active'
-                ? sortTicketsByStatusAndActivity(tickets, state.ticketStatuses)
-                : tickets
+              state.viewType === 'active' ? sortTicketsByStatusAndActivity(tickets, state.ticketStatuses) : tickets
           }
         }
         case 'deleted': {
@@ -240,10 +242,7 @@ const reducer = handleActions(
       const tickets = state.tickets.set(idx, fromJS(ticket))
       return {
         ...state,
-        tickets:
-          state.viewType === 'active'
-            ? sortTicketsByStatusAndActivity(tickets, state.ticketStatuses)
-            : tickets
+        tickets: state.viewType === 'active' ? sortTicketsByStatusAndActivity(tickets, state.ticketStatuses) : tickets
       }
     },
 
@@ -283,7 +282,7 @@ const reducer = handleActions(
         ...state,
         ticketStatuses,
         tickets:
-          state.viewType === 'active'
+          state.viewType === 'active' && !state.sortBy
             ? sortTicketsByStatusAndActivity(state.tickets, ticketStatuses)
             : state.tickets
       }

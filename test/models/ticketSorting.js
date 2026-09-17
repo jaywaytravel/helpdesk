@@ -94,4 +94,36 @@ describe('ticket status and activity sorting', function () {
 
     expect(tickets.map(ticket => ticket.uid)).to.deep.equal([990002, 990004])
   })
+
+  it('sorts a ticket column before applying pagination', async function () {
+    const firstPage = await ticketSchema.getTicketsWithObject([group._id], {
+      limit: 2,
+      page: 0,
+      status: [newStatus._id.toString(), openStatus._id.toString()],
+      sortBy: 'subject',
+      sortDirection: 'asc'
+    })
+    const secondPage = await ticketSchema.getTicketsWithObject([group._id], {
+      limit: 2,
+      page: 1,
+      status: [newStatus._id.toString(), openStatus._id.toString()],
+      sortBy: 'subject',
+      sortDirection: 'asc'
+    })
+
+    expect(firstPage.map(ticket => ticket.uid)).to.deep.equal([990002, 990004])
+    expect(secondPage.map(ticket => ticket.uid)).to.deep.equal([990003, 990001])
+  })
+
+  it('sorts configured statuses in descending order when explicitly selected', async function () {
+    const tickets = await ticketSchema.getTicketsWithObject([group._id], {
+      limit: -1,
+      page: 0,
+      status: [newStatus._id.toString(), openStatus._id.toString()],
+      sortBy: 'status',
+      sortDirection: 'desc'
+    })
+
+    expect(tickets.map(ticket => ticket.uid)).to.deep.equal([990004, 990003, 990001, 990002])
+  })
 })

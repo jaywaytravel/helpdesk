@@ -17,22 +17,44 @@ import PropTypes from 'prop-types'
 
 class TableHeader extends React.Component {
   render () {
-    const { width, height, padding, textAlign, text, component } = this.props
+    const { width, height, padding, textAlign, text, component, sortable, sortDirection, onSort } = this.props
+    const sortIndicator = sortDirection === 'asc' ? '▲' : sortDirection === 'desc' ? '▼' : '↕'
+    const onKeyDown = e => {
+      if (e.key === 'Enter' || e.key === ' ') {
+        e.preventDefault()
+        onSort()
+      }
+    }
 
     return (
       <th
+        onClick={sortable ? onSort : undefined}
+        onKeyDown={sortable ? onKeyDown : undefined}
+        tabIndex={sortable ? 0 : undefined}
+        aria-sort={
+          sortable
+            ? sortDirection === 'asc'
+              ? 'ascending'
+              : sortDirection === 'desc'
+              ? 'descending'
+              : 'none'
+            : undefined
+        }
         style={{
-          width: width,
-          padding: padding,
-          height: height,
+          width,
+          padding,
+          height,
           verticalAlign: 'middle',
           fontSize: 12,
           textTransform: 'uppercase',
-          textAlign: textAlign
+          textAlign,
+          cursor: sortable ? 'pointer' : undefined,
+          userSelect: sortable ? 'none' : undefined
         }}
       >
         {component}
         {text}
+        {sortable && <span style={{ marginLeft: 4, fontSize: 9, opacity: 1 }}>{sortIndicator}</span>}
       </th>
     )
   }
@@ -44,11 +66,15 @@ TableHeader.propTypes = {
   padding: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
   textAlign: PropTypes.string,
   text: PropTypes.string,
-  component: PropTypes.oneOfType([PropTypes.element, PropTypes.func])
+  component: PropTypes.oneOfType([PropTypes.element, PropTypes.func]),
+  sortable: PropTypes.bool,
+  sortDirection: PropTypes.oneOf(['asc', 'desc']),
+  onSort: PropTypes.func
 }
 
 TableHeader.defaultProps = {
-  textAlign: 'left'
+  textAlign: 'left',
+  sortable: false
 }
 
 export default TableHeader

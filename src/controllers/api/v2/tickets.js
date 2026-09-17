@@ -47,6 +47,12 @@ ticketsV2.get = async (req, res) => {
     page
   }
 
+  const sortableFields = ['status', 'uid', 'subject', 'type', 'date', 'owner', 'group', 'assignee', 'updated']
+  if (sortableFields.includes(query.sortBy)) {
+    queryObject.sortBy = query.sortBy
+    queryObject.sortDirection = query.sortDirection === 'desc' ? 'desc' : 'asc'
+  }
+
   try {
     let groups = []
     if (req.user.role.isAdmin || req.user.role.isAgent) {
@@ -65,7 +71,7 @@ ticketsV2.get = async (req, res) => {
     switch (type.toLowerCase()) {
       case 'active':
         queryObject.status = statuses.map(i => i._id.toString())
-        queryObject.sortByStatusOrder = true
+        queryObject.sortByStatusOrder = !queryObject.sortBy
         break
       case 'assigned':
         queryObject.filter = {
