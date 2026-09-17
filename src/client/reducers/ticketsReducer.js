@@ -74,6 +74,44 @@ function hasInView (state, view, statusId, assignee, userId, userGroupIds, group
   return hasGroup && hasView
 }
 
+function sortTicketsByStatusAndActivity (tickets, statuses) {
+  if (statuses.size === 0) return tickets
+
+  const getStatusId = ticket => {
+    const status = ticket.get('status')
+    return status && typeof status.get === 'function' ? status.get('_id') : status
+  }
+
+  const getStatusOrder = ticket => {
+    const statusId = getStatusId(ticket)
+    const statusIndex = statuses.findIndex(status => status.get('_id') === statusId)
+    if (statusIndex === -1) return Number.MAX_SAFE_INTEGER
+
+    const status = statuses.get(statusIndex)
+    const order = status.get('order')
+    if (Number.isFinite(order)) return order
+
+    const uid = status.get('uid')
+    return Number.isFinite(uid) ? uid : Number.MAX_SAFE_INTEGER
+  }
+
+  const getActivityDate = ticket => {
+    const value = ticket.get('updated') || ticket.get('date')
+    const timestamp = value ? new Date(value).getTime() : 0
+    return Number.isNaN(timestamp) ? 0 : timestamp
+  }
+
+  return tickets.sort((left, right) => {
+    const statusDifference = getStatusOrder(left) - getStatusOrder(right)
+    if (statusDifference !== 0) return statusDifference
+
+    const activityDifference = getActivityDate(right) - getActivityDate(left)
+    if (activityDifference !== 0) return activityDifference
+
+    return right.get('uid') - left.get('uid')
+  })
+}
+
 const reducer = handleActions(
   {
     [FETCH_TICKETS.PENDING]: (state, action) => {
@@ -86,9 +124,11 @@ const reducer = handleActions(
     },
 
     [FETCH_TICKETS.SUCCESS]: (state, action) => {
+      const tickets = fromJS(action.response.tickets || [])
       return {
         ...state,
-        tickets: fromJS(action.response.tickets || []),
+        tickets:
+          state.viewType === 'active' ? sortTicketsByStatusAndActivity(tickets, state.ticketStatuses) : tickets,
         currentPage: Number(action.response.page || 0),
         prevPage: fromJS(action.response.prevPage),
         nextPage: fromJS(action.response.nextPage),
@@ -129,9 +169,13 @@ const reducer = handleActions(
       switch (type) {
         case 'created': {
           const ticket = action.payload.data
+          const tickets = state.tickets.insert(0, fromJS(ticket))
           return {
             ...state,
-            tickets: state.tickets.insert(0, fromJS(ticket))
+            tickets:
+              state.viewType === 'active'
+                ? sortTicketsByStatusAndActivity(tickets, state.ticketStatuses)
+                : tickets
           }
         }
         case 'deleted': {
@@ -186,13 +230,20 @@ const reducer = handleActions(
         const withTicket = state.tickets.push(fromJS(ticket))
         return {
           ...state,
-          tickets: withTicket.sortBy(t => -t.get('uid'))
+          tickets:
+            state.viewType === 'active'
+              ? sortTicketsByStatusAndActivity(withTicket, state.ticketStatuses)
+              : withTicket.sortBy(t => -t.get('uid'))
         }
       }
 
+      const tickets = state.tickets.set(idx, fromJS(ticket))
       return {
         ...state,
-        tickets: state.tickets.set(idx, fromJS(ticket))
+        tickets:
+          state.viewType === 'active'
+            ? sortTicketsByStatusAndActivity(tickets, state.ticketStatuses)
+            : tickets
       }
     },
 
@@ -227,9 +278,14 @@ const reducer = handleActions(
     },
 
     [FETCH_STATUS.SUCCESS]: (state, action) => {
+      const ticketStatuses = fromJS(action.response.status)
       return {
         ...state,
-        ticketStatuses: fromJS(action.response.status)
+        ticketStatuses,
+        tickets:
+          state.viewType === 'active'
+            ? sortTicketsByStatusAndActivity(state.tickets, ticketStatuses)
+            : state.tickets
       }
     },
 

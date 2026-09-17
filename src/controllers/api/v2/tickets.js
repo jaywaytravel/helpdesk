@@ -65,6 +65,7 @@ ticketsV2.get = async (req, res) => {
     switch (type.toLowerCase()) {
       case 'active':
         queryObject.status = statuses.map(i => i._id.toString())
+        queryObject.sortByStatusOrder = true
         break
       case 'assigned':
         queryObject.filter = {

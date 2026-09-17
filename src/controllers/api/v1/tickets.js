@@ -1393,18 +1393,32 @@ apiTickets.createStatus = function (req, res) {
 
   const TicketStatusSchema = require('../../../models/ticketStatus')
 
-  const P = new TicketStatusSchema({
-    name: pName,
-    htmlColor: pHtmlColor
-  })
+  TicketStatusSchema.findOne({ order: { $type: 'number' } })
+    .sort({ order: -1 })
+    .select('order')
+    .lean()
+    .exec(function (err, lastStatus) {
+      if (err) return res.status(400).json({ success: false, error: err.message })
 
-  P.save(function (err, savedPriority) {
-    if (err) {
-      return res.status(400).json({ success: false, error: err.message })
-    }
+      TicketStatusSchema.countDocuments({}, function (err, statusCount) {
+        if (err) return res.status(400).json({ success: false, error: err.message })
 
-    return res.json({ success: true, priority: savedPriority })
-  })
+        const nextOrder = lastStatus && Number.isFinite(lastStatus.order) ? lastStatus.order + 1 : statusCount
+        const P = new TicketStatusSchema({
+          name: pName,
+          htmlColor: pHtmlColor,
+          order: nextOrder
+        })
+
+        P.save(function (err, savedStatus) {
+          if (err) {
+            return res.status(400).json({ success: false, error: err.message })
+          }
+
+          return res.json({ success: true, status: savedStatus })
+        })
+      })
+    })
 }
 
 apiTickets.getStatus = function (req, res) {

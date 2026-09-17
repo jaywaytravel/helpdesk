@@ -985,6 +985,64 @@ function buildQueryWithObject (SELF, grpId, object, count) {
   return query
 }
 
+async function getTicketsSortedByStatusOrder (SELF, grpId, object) {
+  const page = object.page || 0
+  const limit = object.limit || 10
+  const filterObject = Object.assign({}, object, { limit: -1, page: 0, sortByStatusOrder: false })
+  const filterQuery = buildQueryWithObject(SELF, grpId, filterObject)
+
+  // Aggregations do not cast query values automatically. Reuse Mongoose's query
+  // casting so ObjectId filters behave exactly like the regular ticket query.
+  filterQuery.cast(SELF)
+
+  const pipeline = [
+    { $match: filterQuery.getFilter() },
+    {
+      $lookup: {
+        from: 'statuses',
+        localField: 'status',
+        foreignField: '_id',
+        as: 'statusForSort'
+      }
+    },
+    {
+      $addFields: {
+        statusOrder: {
+          $ifNull: [
+            { $arrayElemAt: ['$statusForSort.order', 0] },
+            { $ifNull: [{ $arrayElemAt: ['$statusForSort.uid', 0] }, Number.MAX_SAFE_INTEGER] }
+          ]
+        },
+        activityDate: { $ifNull: ['$updated', '$date'] }
+      }
+    },
+    { $sort: { statusOrder: 1, activityDate: -1, uid: -1, _id: 1 } }
+  ]
+
+  if (limit !== -1) {
+    pipeline.push({ $skip: page * limit }, { $limit: limit })
+  }
+  pipeline.push({ $project: { _id: 1 } })
+
+  const ticketIds = await SELF.aggregate(pipeline).exec()
+  if (ticketIds.length === 0) {
+    return []
+  }
+
+  const tickets = await SELF.find({ _id: { $in: ticketIds.map(ticket => ticket._id) } })
+    .populate(
+      'owner assignee subscribers comments.owner notes.owner history.owner',
+      'username fullname email role image title'
+    )
+    .populate('assignee', 'username fullname email role image title')
+    .populate('type tags status group')
+    .lean()
+    .exec()
+
+  const ticketsById = new Map(tickets.map(ticket => [ticket._id.toString(), ticket]))
+  return ticketIds.map(ticket => ticketsById.get(ticket._id.toString())).filter(Boolean)
+}
+
 ticketSchema.statics.getTicketsWithObject = async function (grpId, object, callback) {
   const self = this
   return new Promise((resolve, reject) => {
@@ -992,6 +1050,15 @@ ticketSchema.statics.getTicketsWithObject = async function (grpId, object, callb
       try {
         if (!grpId || !_.isArray(grpId) || !_.isObject(object))
           throw new Error('Invalid parameter in - TicketSchema.GetTicketsWithObject()')
+
+        if (object.sortByStatusOrder) {
+          const tickets = await getTicketsSortedByStatusOrder(self, grpId, object)
+          if (typeof callback === 'function') {
+            return callback(null, tickets)
+          }
+
+          return resolve(tickets)
+        }
 
         const query = buildQueryWithObject(self, grpId, object)
 

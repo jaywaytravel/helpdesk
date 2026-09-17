@@ -6,13 +6,14 @@ var async = require('async')
 var mongoose = require('mongoose')
 var path = require('path')
 var _ = require('lodash')
+var nconf = require('nconf')
 
 var database, db
 var CONNECTION_URI = 'mongodb://localhost:27017/polonel_trudesk31908899'
 
 // Global Setup for tests
 before(function (done) {
-  this.timeout(15000) // Make it a longer timeout since we have to start the web server
+  this.timeout(180000) // Starting the web server and seeding defaults can be slow.
   delete require.cache[require.resolve('../src/database')]
   delete require.cache[require.resolve('mongoose')]
   mongoose = require('mongoose')
@@ -49,6 +50,16 @@ before(function (done) {
           )
         },
         function (cb) {
+          var counter = require('../src/models/counters')
+          counter.create(
+            {
+              _id: 'status',
+              next: 4
+            },
+            cb
+          )
+        },
+        function (cb) {
           var typeSchema = require('../src/models/tickettype')
           typeSchema.insertMany([{ name: 'Task' }, { name: 'Issue' }], cb)
         },
@@ -56,10 +67,10 @@ before(function (done) {
           var statusSchema = require('../src/models/ticketStatus')
           statusSchema.insertMany(
             [
-              { name: 'New', uid: 0, isLocked: true },
-              { name: 'Open', uid: 1, isLocked: true },
-              { name: 'Pending', uid: 2, isLocked: true },
-              { name: 'Closed', uid: 3, isLocked: true, isResolved: true }
+              { name: 'New', uid: 0, order: 0, isLocked: true },
+              { name: 'Open', uid: 1, order: 1, isLocked: true },
+              { name: 'Pending', uid: 2, order: 2, isLocked: true },
+              { name: 'Closed', uid: 3, order: 3, isLocked: true, isResolved: true }
             ],
             cb
           )
@@ -160,6 +171,11 @@ before(function (done) {
           )
         },
         function (cb) {
+          // webserver config adds nconf providers, so set the test secret
+          // immediately before loading middleware/passport.
+          nconf.overrides({
+            tokens: { secret: 'test-only-jwt-secret' }
+          })
           var ws = require('../src/webserver')
           ws.init(
             db,
@@ -187,11 +203,11 @@ before(function (done) {
 
 // Global Teardown for tests
 after(function (done) {
-  this.timeout(5000)
+  this.timeout(15000)
   mongoose.connection.dropDatabase(function () {
     mongoose.connection.close(function () {
-      socketServer.eventLoop.stop()
-      server.close()
+      if (global.socketServer) global.socketServer.eventLoop.stop()
+      if (global.server) global.server.close()
 
       done()
     })
