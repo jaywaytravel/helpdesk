@@ -211,12 +211,14 @@
      * @param  {Blob} file blob data received from event.dataTransfer object
      * @return {XMLHttpRequest} request object which sends the file
      */
-    inlineAttachment.prototype.uploadFile = function (file) {
+    inlineAttachment.prototype.uploadFile = function (file, placeholder) {
         var me = this,
             formData = new FormData(),
             xhr = new XMLHttpRequest(),
             settings = this.settings,
             extension = settings.defaultExtension || settings.defualtExtension
+
+        xhr.inlineAttachmentPlaceholder = placeholder || this.lastValue
 
         if (typeof settings.setupFormData === 'function') {
             settings.setupFormData(formData, file)
@@ -266,6 +268,12 @@
                 me.onFileUploadError(xhr)
             }
         }
+        xhr.onerror = function () {
+            me.onFileUploadError(xhr)
+        }
+        xhr.onabort = function () {
+            me.onFileUploadError(xhr)
+        }
         if (settings.beforeFileUpload(xhr) !== false) {
             xhr.send(formData)
         }
@@ -306,7 +314,8 @@
                 } else {
                     newValue = this.settings.urlText.replace(this.filenameTag, filename)
                 }
-                var text = this.editor.getValue().replace(this.lastValue, newValue)
+                var placeholder = xhr.inlineAttachmentPlaceholder || this.lastValue,
+                    text = this.editor.getValue().replace(placeholder, newValue)
                 this.editor.setValue(text)
                 this.settings.onFileUploaded.call(this, filename)
             }
@@ -321,7 +330,8 @@
      */
     inlineAttachment.prototype.onFileUploadError = function (xhr) {
         if (this.settings.onFileUploadError.call(this, xhr) !== false) {
-            var text = this.editor.getValue().replace(this.lastValue, this.settings.errorText)
+            var placeholder = xhr.inlineAttachmentPlaceholder || this.lastValue,
+                text = this.editor.getValue().replace(placeholder, this.settings.errorText)
             this.editor.setValue(text)
         }
     }
@@ -334,8 +344,10 @@
      */
     inlineAttachment.prototype.onFileInserted = function (file) {
         if (this.settings.onFileReceived.call(this, file) !== false) {
-            this.lastValue = this.settings.progressText
+            var id = Date.now().toString(36) + Math.random().toString(36).slice(2)
+            this.lastValue = this.settings.progressText.replace('{id}', id)
             this.editor.insertValue(this.lastValue)
+            return this.lastValue
         }
     }
 
@@ -356,8 +368,9 @@
                 var item = items[i]
                 if (this.isFileAllowed(item)) {
                     result = true
-                    this.onFileInserted(item.getAsFile())
-                    this.uploadFile(item.getAsFile())
+                    var pastedFile = item.getAsFile()
+                    var pastedPlaceholder = this.onFileInserted(pastedFile)
+                    this.uploadFile(pastedFile, pastedPlaceholder)
                 }
             }
         }
@@ -380,8 +393,8 @@
             var file = e.dataTransfer.files[i]
             if (this.isFileAllowed(file)) {
                 result = true
-                this.onFileInserted(file)
-                this.uploadFile(file)
+                var placeholder = this.onFileInserted(file)
+                this.uploadFile(file, placeholder)
             }
         }
 

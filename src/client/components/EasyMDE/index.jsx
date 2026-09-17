@@ -42,16 +42,22 @@ class EasyMDE extends React.Component {
       element: this.element,
       forceSync: true,
       minHeight: this.props.height,
-      toolbar: EasyMDE.getMdeToolbarItems(),
+      imageAccept: 'image/jpeg,image/png,image/gif,image/webp',
+      toolbar: EasyMDE.getMdeToolbarItems(() => {
+        if (!this.imageUploadInput) return
+        this.imageUploadInput.value = null
+        this.imageUploadInput.click()
+      }),
       uploadImage: true,
       autoDownloadFontAwesome: false,
       status: false,
-      // spellChecker: 
+      // spellChecker:
 
-      spellChecker: function(editor) {
+      spellChecker: function (editor) {
         // const editor = this.easymde;
-        return CodeMirrorSpellChecker({codeMirrorInstance: editor});
-  }})
+        return CodeMirrorSpellChecker({ codeMirrorInstance: editor })
+      }
+    })
 
     this.easymde.codemirror.on('change', () => {
       this.onTextareaChanged(this.easymde.value())
@@ -65,7 +71,7 @@ class EasyMDE extends React.Component {
 
       if (!$el.hasClass('hasInlineUpload')) {
         $el.addClass('hasInlineUpload')
-        window.inlineAttachment.editors.codemirror4.attach(
+        this.inlineAttachment = window.inlineAttachment.editors.codemirror4.attach(
           this.easymde.codemirror,
 
           {
@@ -82,24 +88,39 @@ class EasyMDE extends React.Component {
                   newValue = this.settings.urlText.replace(this.filenameTag, filename)
                 }
 
-                const text = this.editor.getValue().replace(this.lastValue, newValue)
+                const placeholder = xhr.inlineAttachmentPlaceholder || this.lastValue
+                const text = this.editor.getValue().replace(placeholder, newValue)
                 this.editor.setValue(text)
                 this.settings.onFileUploaded.call(this, filename)
               }
               return false
             },
             onFileUploadError: function (xhr) {
-              const result = xhr.responseText
-              const text = this.editor.getValue() + ' ' + result
+              const result = xhr.responseText || `HTTP ${xhr.status}`
+              const placeholder = xhr.inlineAttachmentPlaceholder || this.lastValue
+              const text = this.editor.getValue().replace(placeholder, `Image upload failed: ${result}`)
               this.editor.setValue(text)
+              return false
             },
             extraHeaders: self.props.inlineImageUploadHeaders,
             errorText: 'Error uploading file: ',
             uploadUrl: self.props.inlineImageUploadUrl,
             jsonFieldName: 'filename',
-            urlText: '![Image]({filename})'
+            urlText: '![Image]({filename})',
+            progressText: 'Uploading image…<!--{id}-->',
+            allowedTypes: ['image/jpeg', 'image/png', 'image/gif', 'image/webp']
           }
         )
+
+        this.imageUploadInput = this.easymde.gui.toolbar.querySelector('.imageInput')
+        this.onImageSelected = e => {
+          Array.from(e.target.files || []).forEach(file => {
+            if (!this.inlineAttachment.isFileAllowed(file)) return
+            const placeholder = this.inlineAttachment.onFileInserted(file)
+            this.inlineAttachment.uploadFile(file, placeholder)
+          })
+        }
+        if (this.imageUploadInput) this.imageUploadInput.addEventListener('change', this.onImageSelected)
 
         EasyMDE.attachFileDesc(self.element)
       }
@@ -126,6 +147,9 @@ class EasyMDE extends React.Component {
   }
 
   componentWillUnmount () {
+    if (this.imageUploadInput && this.onImageSelected) {
+      this.imageUploadInput.removeEventListener('change', this.onImageSelected)
+    }
     if (this.easymde) {
       this.easymde.codemirror.off('change')
       this.easymde = null
@@ -148,7 +172,10 @@ class EasyMDE extends React.Component {
       .addClass('attachFileDesc')
       .html('<p>Attach images by dragging & dropping or pasting from clipboard.</p>')
     $el.siblings('.CodeMirror').addClass('hasFileDesc')
-    $el.siblings('.editor-statusbar').addClass('hasFileDesc').prepend(attachFileDiv)
+    $el
+      .siblings('.editor-statusbar')
+      .addClass('hasFileDesc')
+      .prepend(attachFileDiv)
   }
 
   getEditorText () {
@@ -161,7 +188,7 @@ class EasyMDE extends React.Component {
     })
   }
 
-  static getMdeToolbarItems () {
+  static getMdeToolbarItems (onUploadImage) {
     return [
       {
         name: 'bold',
@@ -223,7 +250,7 @@ class EasyMDE extends React.Component {
       '|',
       {
         name: 'upload-image',
-        action: Easymde.drawUploadedImage,
+        action: onUploadImage,
         className: 'material-icons mi-upload no-ajaxy',
         title: 'Upload file'
       }

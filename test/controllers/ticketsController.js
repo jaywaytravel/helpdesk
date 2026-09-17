@@ -2,6 +2,8 @@
 var async = require('async')
 var expect = require('chai').expect
 var request = require('supertest')
+var fs = require('fs-extra')
+var path = require('path')
 
 describe('ticketsController', function () {
   var authAgent = request.agent('http://localhost:3111')
@@ -92,6 +94,26 @@ describe('ticketsController', function () {
 
         done()
       })
+  })
+
+  it('image upload waits until the complete file is available', async function () {
+    const image = Buffer.from(
+      'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNk+A8AAQUBAScY42YAAAAASUVORK5CYII=',
+      'base64'
+    )
+    const res = await authAgent
+      .post('/tickets/uploadmdeimage')
+      .set('ticketid', 'uploads')
+      .attach('file', image, { filename: 'upload-test.png', contentType: 'image/png' })
+      .expect(200)
+
+    const uploadedFile = path.join(__dirname, '../../public', res.body.filename)
+    try {
+      const savedImage = await fs.readFile(uploadedFile)
+      expect(savedImage.equals(image)).to.be.true
+    } finally {
+      await fs.remove(uploadedFile)
+    }
   })
 
   it('/tickets/unassigned - should get unassigned tickets', function (done) {

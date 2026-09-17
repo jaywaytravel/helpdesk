@@ -571,7 +571,6 @@ ticketsController.single = function (req, res) {
 ticketsController.uploadImageMDE = function (req, res) {
   const Chance = require('chance')
   const chance = new Chance()
-  const fs = require('fs-extra')
   const Busboy = require('busboy')
   const busboy = Busboy({
     headers: req.headers,
@@ -583,9 +582,12 @@ ticketsController.uploadImageMDE = function (req, res) {
 
   const object = {}
   let error
+  let uploadPromise
 
   object.ticketId = req.headers.ticketid
-  if (!object.ticketId) return res.status(400).json({ success: false })
+  if (!object.ticketId || !/^(uploads|[a-f\d]{24})$/i.test(object.ticketId)) {
+    return res.status(400).json({ success: false, error: 'Invalid ticket id' })
+  }
 
   busboy.on('file', function (name, file, info) {
     const filename = info.filename
@@ -633,6 +635,7 @@ ticketsController.uploadImageMDE = function (req, res) {
     if (!fs.existsSync(savePath)) fs.ensureDirSync(savePath)
 
     object.filePath = path.join(savePath, 'inline_' + sanitizedFilename)
+    object.tempFilePath = object.filePath + '.part'
     object.filename = sanitizedFilename
     object.mimetype = mimetype
 
@@ -647,32 +650,45 @@ ticketsController.uploadImageMDE = function (req, res) {
 
     file.on('limit', function () {
       error = {
-        status: 500,
+        status: 413,
         message: 'File too large'
       }
-
-      // Delete the temp file
-      if (fs.existsSync(object.filePath)) fs.unlinkSync(object.filePath)
-
-      return file.resume()
     })
 
-    file.pipe(fs.createWriteStream(object.filePath))
+    uploadPromise = new Promise((resolve, reject) => {
+      const output = fs.createWriteStream(object.tempFilePath, { flags: 'wx' })
+      output.on('finish', resolve)
+      output.on('error', reject)
+      file.on('error', reject)
+      file.pipe(output)
+    })
   })
 
-  busboy.on('finish', function () {
-    if (error) return res.status(error.status).send(error.message)
+  busboy.on('finish', async function () {
+    try {
+      if (uploadPromise) await uploadPromise
 
-    if (_.isUndefined(object.ticketId) || _.isUndefined(object.filename) || _.isUndefined(object.filePath)) {
-      return res.status(400).send('Invalid Form Data')
+      if (error) {
+        if (object.tempFilePath) await fs.remove(object.tempFilePath)
+        return res.status(error.status).send(error.message)
+      }
+
+      if (_.isUndefined(object.ticketId) || _.isUndefined(object.filename) || _.isUndefined(object.filePath)) {
+        return res.status(400).send('Invalid Form Data')
+      }
+
+      if (!fs.existsSync(object.tempFilePath)) return res.status(500).send('File Failed to Save to Disk')
+
+      await fs.move(object.tempFilePath, object.filePath, { overwrite: false })
+
+      const fileUrl = '/uploads/tickets/' + object.ticketId + '/inline_' + object.filename
+
+      return res.json({ filename: fileUrl, ticketId: object.ticketId })
+    } catch (err) {
+      winston.warn(err)
+      if (object.tempFilePath) await fs.remove(object.tempFilePath)
+      return res.status(500).send('File Failed to Save to Disk')
     }
-
-    // Everything Checks out lets make sure the file exists and then add it to the attachments array
-    if (!fs.existsSync(object.filePath)) return res.status(500).send('File Failed to Save to Disk')
-
-    const fileUrl = '/uploads/tickets/' + object.ticketId + '/inline_' + object.filename
-
-    return res.json({ filename: fileUrl, ticketId: object.ticketId })
   })
 
   req.pipe(busboy)
