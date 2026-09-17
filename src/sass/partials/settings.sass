@@ -61,6 +61,11 @@
       transform: translateY(25px)
       opacity: 1
 
+.search-results-container.animate-in
+  pointer-events: none
+  &.is-in
+    pointer-events: auto
+
 .ticket-type-categories,
 .permission-roles
   background: darken($page_content_bg, 1%)
