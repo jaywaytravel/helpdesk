@@ -1,0 +1,23 @@
+{
+  "compilerOptions": {
+    "allowJs": true,
+    "checkJs": false,
+    "baseUrl": ".",
+    "experimentalDecorators": true,
+    "moduleResolution": "node",
+    "jsx": "react",
+    "paths": {
+      "components/*": ["src/client/components/*"],
+      "containers/*": ["src/client/containers/*"],
+      "actions/*": ["src/client/actions/*"],
+      "api": ["src/client/api/index.js"],
+      "api/*": ["src/client/api/*"],
+      "lib/*": ["src/public/js/modules/*"],
+      "lib2/*": ["src/client/lib/*"],
+      "serverSocket": ["src/socketio/index.js"],
+      "serverSocket/*": ["src/socketio/*"]
+    }
+  },
+  "include": ["src/**/*.js", "src/**/*.jsx"],
+  "exclude": ["node_modules", "public", "src/public/js/vendor", "mobile"]
+}
