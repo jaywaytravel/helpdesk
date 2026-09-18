@@ -50,7 +50,9 @@ class TicketStatusContainer extends React.Component {
       <div>
         <SplitSettingsPanel
           title={'Ticket Status'}
-          subtitle={'Drag statuses to set their display order. Active tickets use this order, then latest activity.'}
+          subtitle={
+            'Drag statuses to set their Status-column order. Set each status priority to control the default Active-ticket order.'
+          }
           rightComponent={
             <Button
               text={'Create'}

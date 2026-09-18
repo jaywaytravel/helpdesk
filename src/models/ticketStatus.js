@@ -26,6 +26,15 @@ var statusSchema = mongoose.Schema(
     htmlColor: { type: String, default: '#29b955' },
     uid: { type: Number, unique: true, index: true },
     order: { type: Number, index: true },
+    defaultSortPriority: {
+      type: Number,
+      default: 1,
+      min: 1,
+      validate: {
+        validator: Number.isSafeInteger,
+        message: 'Default sort priority must be a positive integer.'
+      }
+    },
     slatimer: { type: Boolean, default: true },
     isResolved: { type: Boolean, default: false },
     isLocked: { type: Boolean, default: false }

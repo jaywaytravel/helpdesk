@@ -110,7 +110,7 @@ TitlePagination.propTypes = {
 }
 
 TitlePagination.defaultProps = {
-  limit: 50,
+  limit: 200,
   prevPage: 0,
   nextPage: 1
 }

@@ -75,7 +75,7 @@ function hasInView (state, view, statusId, assignee, userId, userGroupIds, group
   return hasGroup && hasView
 }
 
-function sortTicketsByStatusAndActivity (tickets, statuses) {
+function sortTicketsByDefaultPriority (tickets, statuses) {
   if (statuses.size === 0) return tickets
 
   const getStatusId = ticket => {
@@ -83,31 +83,28 @@ function sortTicketsByStatusAndActivity (tickets, statuses) {
     return status && typeof status.get === 'function' ? status.get('_id') : status
   }
 
-  const getStatusOrder = ticket => {
+  const getDefaultSortPriority = ticket => {
     const statusId = getStatusId(ticket)
     const statusIndex = statuses.findIndex(status => status.get('_id') === statusId)
-    if (statusIndex === -1) return Number.MAX_SAFE_INTEGER
+    if (statusIndex === -1) return 1
 
     const status = statuses.get(statusIndex)
-    const order = status.get('order')
-    if (Number.isFinite(order)) return order
-
-    const uid = status.get('uid')
-    return Number.isFinite(uid) ? uid : Number.MAX_SAFE_INTEGER
+    const priority = Number(status.get('defaultSortPriority'))
+    return Number.isSafeInteger(priority) && priority > 0 ? priority : 1
   }
 
-  const getActivityDate = ticket => {
-    const value = ticket.get('updated') || ticket.get('date')
+  const getCreatedDate = ticket => {
+    const value = ticket.get('date')
     const timestamp = value ? new Date(value).getTime() : 0
     return Number.isNaN(timestamp) ? 0 : timestamp
   }
 
   return tickets.sort((left, right) => {
-    const statusDifference = getStatusOrder(left) - getStatusOrder(right)
-    if (statusDifference !== 0) return statusDifference
+    const priorityDifference = getDefaultSortPriority(left) - getDefaultSortPriority(right)
+    if (priorityDifference !== 0) return priorityDifference
 
-    const activityDifference = getActivityDate(right) - getActivityDate(left)
-    if (activityDifference !== 0) return activityDifference
+    const createdDifference = getCreatedDate(right) - getCreatedDate(left)
+    if (createdDifference !== 0) return createdDifference
 
     return right.get('uid') - left.get('uid')
   })
@@ -131,7 +128,7 @@ const reducer = handleActions(
         ...state,
         tickets:
           state.viewType === 'active' && !state.sortBy
-            ? sortTicketsByStatusAndActivity(tickets, state.ticketStatuses)
+            ? sortTicketsByDefaultPriority(tickets, state.ticketStatuses)
             : tickets,
         currentPage: Number(action.response.page || 0),
         prevPage: fromJS(action.response.prevPage),
@@ -177,7 +174,9 @@ const reducer = handleActions(
           return {
             ...state,
             tickets:
-              state.viewType === 'active' ? sortTicketsByStatusAndActivity(tickets, state.ticketStatuses) : tickets
+              state.viewType === 'active' && !state.sortBy
+                ? sortTicketsByDefaultPriority(tickets, state.ticketStatuses)
+                : tickets
           }
         }
         case 'deleted': {
@@ -233,8 +232,8 @@ const reducer = handleActions(
         return {
           ...state,
           tickets:
-            state.viewType === 'active'
-              ? sortTicketsByStatusAndActivity(withTicket, state.ticketStatuses)
+            state.viewType === 'active' && !state.sortBy
+              ? sortTicketsByDefaultPriority(withTicket, state.ticketStatuses)
               : withTicket.sortBy(t => -t.get('uid'))
         }
       }
@@ -242,7 +241,10 @@ const reducer = handleActions(
       const tickets = state.tickets.set(idx, fromJS(ticket))
       return {
         ...state,
-        tickets: state.viewType === 'active' ? sortTicketsByStatusAndActivity(tickets, state.ticketStatuses) : tickets
+        tickets:
+          state.viewType === 'active' && !state.sortBy
+            ? sortTicketsByDefaultPriority(tickets, state.ticketStatuses)
+            : tickets
       }
     },
 
@@ -283,7 +285,7 @@ const reducer = handleActions(
         ticketStatuses,
         tickets:
           state.viewType === 'active' && !state.sortBy
-            ? sortTicketsByStatusAndActivity(state.tickets, ticketStatuses)
+            ? sortTicketsByDefaultPriority(state.tickets, ticketStatuses)
             : state.tickets
       }
     },

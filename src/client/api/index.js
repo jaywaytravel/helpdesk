@@ -94,7 +94,7 @@ api.dashboard.getTickets = () => {
 
 api.tickets = {}
 api.tickets.getWithPage = payload => {
-  const limit = payload.limit ? payload.limit : 50
+  const limit = payload.limit ? payload.limit : 200
   const page = payload.page ? payload.page : 0
   const type = payload.type ? payload.type : 'all'
   const filter = payload.filter ? encodeURIComponent(JSON.stringify(payload.filter, null, 2)) : undefined
@@ -202,13 +202,14 @@ api.tickets.createStatus = ({ name, htmlColor }) => {
       return res.data
     })
 }
-api.tickets.updateStatus = ({ id, name, htmlColor, isResolved, slatimer }) => {
+api.tickets.updateStatus = ({ id, name, htmlColor, isResolved, slatimer, defaultSortPriority }) => {
   return axios
     .put(`/api/v1/tickets/status/${id}`, {
       name,
       htmlColor,
       isResolved,
-      slatimer
+      slatimer,
+      defaultSortPriority
     })
     .then(res => {
       return res.data

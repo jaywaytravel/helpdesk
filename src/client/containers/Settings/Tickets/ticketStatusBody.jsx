@@ -33,6 +33,7 @@ class TicketStatusBody extends React.Component {
   @observable htmlColor = ''
   @observable slatimer = ''
   @observable isResolved = ''
+  @observable defaultSortPriority = ''
   constructor (props) {
     super(props)
     makeObservable(this)
@@ -43,6 +44,7 @@ class TicketStatusBody extends React.Component {
     this.htmlColor = this.props.status.get('htmlColor') || ''
     this.isResolved = this.props.status.get('isResolved') || false
     this.slatimer = this.props.status.get('slatimer') || false
+    this.defaultSortPriority = this.props.status.get('defaultSortPriority') || 1
   }
 
   componentDidUpdate (prevProps, prevState, snapshot) {
@@ -50,6 +52,9 @@ class TicketStatusBody extends React.Component {
     if (this.htmlColor === '') this.htmlColor = this.props.status.get('htmlColor') || ''
     if (this.isResolved === '') this.isResolved = this.props.status.get('isResolved') || false
     if (this.slatimer === '') this.slatimer = this.props.status.get('slatimer') || false
+    if (this.defaultSortPriority === '') {
+      this.defaultSortPriority = this.props.status.get('defaultSortPriority') || 1
+    }
   }
 
   onSaveClicked (e) {
@@ -58,9 +63,14 @@ class TicketStatusBody extends React.Component {
     const htmlColor = this.htmlColor
     const isResolved = this.isResolved
     const slatimer = this.slatimer
+    const defaultSortPriority = Number(this.defaultSortPriority)
+    if (!Number.isSafeInteger(defaultSortPriority) || defaultSortPriority < 1) {
+      helpers.UI.showSnackbar('Default sort priority must be a positive whole number.', true)
+      return
+    }
 
     api.tickets
-      .updateStatus({ id, name, htmlColor, isResolved, slatimer })
+      .updateStatus({ id, name, htmlColor, isResolved, slatimer, defaultSortPriority })
       .then(res => {
         helpers.UI.showSnackbar('Status updated')
         this.props.fetchSettings()
@@ -118,6 +128,17 @@ class TicketStatusBody extends React.Component {
               label={'Yes'}
               checked={this.isResolved}
               onChange={e => (this.isResolved = e.target.checked)}
+            />
+          </div>
+          <div style={{ marginTop: 20, marginBottom: 15 }}>
+            <label style={{ display: 'inline-block', cursor: 'pointer' }}>Default Active-list sort priority</label>
+            <p className='text-light' style={{ margin: '4px 0 8px' }}>
+              Lower numbers appear first. Tickets with the same priority are sorted by Created, newest first.
+            </p>
+            <Input
+              type={'number'}
+              defaultValue={this.defaultSortPriority.toString()}
+              onChange={value => (this.defaultSortPriority = value)}
             />
           </div>
           <div className={'uk-margin-large-top'} style={{ display: 'flex', justifyContent: 'flex-end' }}>

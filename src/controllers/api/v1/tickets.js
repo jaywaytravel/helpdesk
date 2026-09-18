@@ -1446,8 +1446,16 @@ apiTickets.updateStatus = function (req, res) {
 
     if (data.name) status.name = data.name
     if (data.htmlColor) status.htmlColor = data.htmlColor
-    status.isResolved = data.isResolved
-    status.slatimer = data.slatimer
+    if (_.isBoolean(data.isResolved)) status.isResolved = data.isResolved
+    if (_.isBoolean(data.slatimer)) status.slatimer = data.slatimer
+    if (!_.isUndefined(data.defaultSortPriority)) {
+      const defaultSortPriority = Number(data.defaultSortPriority)
+      if (!Number.isSafeInteger(defaultSortPriority) || defaultSortPriority < 1) {
+        return res.status(400).json({ success: false, error: 'Default sort priority must be a positive integer.' })
+      }
+
+      status.defaultSortPriority = defaultSortPriority
+    }
 
     status.save(function (err, p) {
       if (err) return res.status(400).json({ success: false, error: err.message })

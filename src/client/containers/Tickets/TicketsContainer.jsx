@@ -119,7 +119,7 @@ class TicketsContainer extends React.Component {
     const nextPage = Number(page)
 
     this.props.fetchTickets({
-      limit: 50,
+      limit: 200,
       page: Number.isNaN(nextPage) ? 0 : nextPage,
       type: this.props.view,
       filter: this.props.filter,
@@ -297,7 +297,7 @@ class TicketsContainer extends React.Component {
             <div>
               <div className={'uk-float-right'}>
                 <TitlePagination
-                  limit={50}
+                  limit={200}
                   total={this.props.totalCount}
                   type={this.props.view}
                   prevEnabled={this.props.prevEnabled}

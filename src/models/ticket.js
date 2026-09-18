@@ -985,10 +985,10 @@ function buildQueryWithObject (SELF, grpId, object, count) {
   return query
 }
 
-async function getTicketsSortedByStatusOrder (SELF, grpId, object) {
+async function getTicketsSortedByDefaultPriority (SELF, grpId, object) {
   const page = object.page || 0
   const limit = object.limit || 10
-  const filterObject = Object.assign({}, object, { limit: -1, page: 0, sortByStatusOrder: false })
+  const filterObject = Object.assign({}, object, { limit: -1, page: 0, sortByDefaultPriority: false })
   const filterQuery = buildQueryWithObject(SELF, grpId, filterObject)
 
   // Aggregations do not cast query values automatically. Reuse Mongoose's query
@@ -1007,16 +1007,12 @@ async function getTicketsSortedByStatusOrder (SELF, grpId, object) {
     },
     {
       $addFields: {
-        statusOrder: {
-          $ifNull: [
-            { $arrayElemAt: ['$statusForSort.order', 0] },
-            { $ifNull: [{ $arrayElemAt: ['$statusForSort.uid', 0] }, Number.MAX_SAFE_INTEGER] }
-          ]
-        },
-        activityDate: { $ifNull: ['$updated', '$date'] }
+        defaultSortPriority: {
+          $ifNull: [{ $arrayElemAt: ['$statusForSort.defaultSortPriority', 0] }, 1]
+        }
       }
     },
-    { $sort: { statusOrder: 1, activityDate: -1, uid: -1, _id: 1 } }
+    { $sort: { defaultSortPriority: 1, date: -1, uid: -1, _id: 1 } }
   ]
 
   if (limit !== -1) {
@@ -1064,7 +1060,7 @@ async function getTicketsSortedByColumn (SELF, grpId, object) {
     updated: { value: '$updated' }
   }
   const definition = sortDefinitions[object.sortBy]
-  if (!definition) return getTicketsSortedByStatusOrder(SELF, grpId, object)
+  if (!definition) return getTicketsSortedByDefaultPriority(SELF, grpId, object)
 
   const pipeline = [{ $match: filterQuery.getFilter() }]
   if (definition.from) {
@@ -1138,8 +1134,8 @@ ticketSchema.statics.getTicketsWithObject = async function (grpId, object, callb
           return resolve(tickets)
         }
 
-        if (object.sortByStatusOrder) {
-          const tickets = await getTicketsSortedByStatusOrder(self, grpId, object)
+        if (object.sortByDefaultPriority) {
+          const tickets = await getTicketsSortedByDefaultPriority(self, grpId, object)
           if (typeof callback === 'function') {
             return callback(null, tickets)
           }

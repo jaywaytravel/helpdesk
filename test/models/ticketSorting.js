@@ -6,19 +6,28 @@ const ticketSchema = require('../../src/models/ticket')
 const groupSchema = require('../../src/models/group')
 const statusSchema = require('../../src/models/ticketStatus')
 
-describe('ticket status and activity sorting', function () {
+describe('ticket default priority and column sorting', function () {
   let group
   let newStatus
   let openStatus
-  const ticketUids = [990001, 990002, 990003, 990004]
+  let pendingStatus
+  let originalNewDefaultSortPriority
+  let originalOpenDefaultSortPriority
+  let originalPendingDefaultSortPriority
+  const ticketUids = [990001, 990002, 990003, 990004, 990005]
 
   before(async function () {
     group = await groupSchema.findOne({ name: 'TEST' })
     newStatus = await statusSchema.findOne({ uid: 0 })
     openStatus = await statusSchema.findOne({ uid: 1 })
+    pendingStatus = await statusSchema.findOne({ uid: 2 })
+    originalNewDefaultSortPriority = newStatus.defaultSortPriority
+    originalOpenDefaultSortPriority = openStatus.defaultSortPriority
+    originalPendingDefaultSortPriority = pendingStatus.defaultSortPriority
 
-    await statusSchema.updateOne({ _id: openStatus._id }, { $set: { order: 0 } })
-    await statusSchema.updateOne({ _id: newStatus._id }, { $set: { order: 1 } })
+    await statusSchema.updateOne({ _id: openStatus._id }, { $set: { order: 0, defaultSortPriority: 1 } })
+    await statusSchema.updateOne({ _id: newStatus._id }, { $set: { order: 1, defaultSortPriority: 3 } })
+    await statusSchema.updateOne({ _id: pendingStatus._id }, { $set: { order: 2, defaultSortPriority: 2 } })
 
     const owner = new mongoose.Types.ObjectId()
     await ticketSchema.collection.insertMany([
@@ -63,36 +72,56 @@ describe('ticket status and activity sorting', function () {
         deleted: false,
         subject: 'Sorting test later status',
         issue: 'Sorting test'
+      },
+      {
+        uid: 990005,
+        owner,
+        group: group._id,
+        status: pendingStatus._id,
+        date: new Date('2026-01-20T00:00:00.000Z'),
+        deleted: false,
+        subject: 'Sorting test middle priority',
+        issue: 'Sorting test'
       }
     ])
   })
 
   after(async function () {
     await ticketSchema.deleteMany({ uid: { $in: ticketUids } })
-    await statusSchema.updateOne({ _id: newStatus._id }, { $set: { order: 0 } })
-    await statusSchema.updateOne({ _id: openStatus._id }, { $set: { order: 1 } })
+    await statusSchema.updateOne(
+      { _id: newStatus._id },
+      { $set: { order: 0, defaultSortPriority: originalNewDefaultSortPriority } }
+    )
+    await statusSchema.updateOne(
+      { _id: openStatus._id },
+      { $set: { order: 1, defaultSortPriority: originalOpenDefaultSortPriority } }
+    )
+    await statusSchema.updateOne(
+      { _id: pendingStatus._id },
+      { $set: { order: 2, defaultSortPriority: originalPendingDefaultSortPriority } }
+    )
   })
 
-  it('sorts by configured status order, activity date and uid', async function () {
+  it('sorts status priority levels before sorting each level by creation date', async function () {
     const tickets = await ticketSchema.getTicketsWithObject([group._id], {
       limit: -1,
       page: 0,
-      status: [newStatus._id.toString(), openStatus._id.toString()],
-      sortByStatusOrder: true
+      status: [newStatus._id.toString(), openStatus._id.toString(), pendingStatus._id.toString()],
+      sortByDefaultPriority: true
     })
 
-    expect(tickets.map(ticket => ticket.uid)).to.deep.equal([990003, 990001, 990002, 990004])
+    expect(tickets.map(ticket => ticket.uid)).to.deep.equal([990002, 990003, 990001, 990005, 990004])
   })
 
-  it('applies pagination after status and activity sorting', async function () {
+  it('applies pagination after default priority and creation-date sorting', async function () {
     const tickets = await ticketSchema.getTicketsWithObject([group._id], {
       limit: 2,
       page: 1,
-      status: [newStatus._id.toString(), openStatus._id.toString()],
-      sortByStatusOrder: true
+      status: [newStatus._id.toString(), openStatus._id.toString(), pendingStatus._id.toString()],
+      sortByDefaultPriority: true
     })
 
-    expect(tickets.map(ticket => ticket.uid)).to.deep.equal([990002, 990004])
+    expect(tickets.map(ticket => ticket.uid)).to.deep.equal([990001, 990005])
   })
 
   it('sorts a ticket column before applying pagination', async function () {

@@ -31,7 +31,7 @@ ticketsV2.get = async (req, res) => {
   const query = req.query
   const type = query.type || 'all'
 
-  let limit = 50
+  let limit = 200
   let page = 0
 
   try {
@@ -71,7 +71,7 @@ ticketsV2.get = async (req, res) => {
     switch (type.toLowerCase()) {
       case 'active':
         queryObject.status = statuses.map(i => i._id.toString())
-        queryObject.sortByStatusOrder = !queryObject.sortBy
+        queryObject.sortByDefaultPriority = !queryObject.sortBy
         break
       case 'assigned':
         queryObject.filter = {
