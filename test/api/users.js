@@ -247,6 +247,54 @@ describe('api/users.js', function () {
   //         .expect(200, done);
   // });
 
+  it('should generate and remove an API key', function (done) {
+    var userId
+    var newKey
+
+    async.series(
+      [
+        function (cb) {
+          request
+            .get('/api/v1/users/new.user.1')
+            .set('accesstoken', tdapikey)
+            .set('Accept', 'application/json')
+            .expect(function (res) {
+              userId = res.body.user._id
+            })
+            .expect(200, cb)
+        },
+        function (cb) {
+          request
+            .post('/api/v1/users/' + userId + '/generateapikey')
+            .set('accesstoken', tdapikey)
+            .set('Accept', 'application/json')
+            .expect(function (res) {
+              newKey = res.body.token
+              if (!newKey) throw new Error('No token returned')
+            })
+            .expect(200, cb)
+        },
+        function (cb) {
+          // The new key works
+          request.get('/api/v1/login').set('accesstoken', newKey).set('Accept', 'application/json').expect(200, cb)
+        },
+        function (cb) {
+          // An admin can remove another user's key
+          request
+            .post('/api/v1/users/' + userId + '/removeapikey')
+            .set('accesstoken', tdapikey)
+            .set('Accept', 'application/json')
+            .expect(200, { success: true }, cb)
+        },
+        function (cb) {
+          // The removed key no longer works
+          request.get('/api/v1/login').set('accesstoken', newKey).set('Accept', 'application/json').expect(401, cb)
+        }
+      ],
+      done
+    )
+  })
+
   it('should delete user', function (done) {
     request
       .delete('/api/v1/users/deleted.user')
