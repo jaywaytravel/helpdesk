@@ -5,6 +5,7 @@ import { observer } from 'mobx-react'
 import { makeObservable, observable } from 'mobx'
 import axios from 'axios'
 import moment from 'moment-timezone'
+import UIKit from 'uikit'
 
 import { saveProfile, genMFA } from 'actions/accounts'
 import { showModal, hideModal, setSessionUser } from 'actions/common'
@@ -52,6 +53,8 @@ class ProfileContainer extends React.Component {
   @observable l2Step2 = null
   @observable l2ShowCantSeeQR = null
   @observable l2VerifyText = null
+  // -- API Token (shown once, right after it's generated)
+  @observable apiToken = null
 
   // Prefs
   @observable timezone = null
@@ -243,6 +246,64 @@ class ProfileContainer extends React.Component {
     }
 
     this.props.showModal('PASSWORD_PROMPT', { user: this.props.sessionUser, onVerifyComplete })
+  }
+
+  onGenerateApiTokenClicked = e => {
+    e.preventDefault()
+    const generate = () => {
+      axios
+        .post(`/api/v1/users/${this.props.sessionUser._id}/generateapikey`)
+        .then(res => {
+          if (!res.data || !res.data.token) throw new Error('No token was returned')
+          this.apiToken = res.data.token
+          this.props.setSessionUser()
+        })
+        .catch(error => {
+          const errorText = error.response && error.response.data ? error.response.data.error : error.message
+          helpers.UI.showSnackbar(`Error: ${errorText}`, true)
+        })
+    }
+
+    if (!this.props.sessionUser.hasAccessToken) return generate()
+
+    UIKit.modal.confirm(
+      `<h2>Replace your API token?</h2>
+      <p style="font-size: 15px;">
+        Anything using your current token will stop working until you give it the new one.
+      </p>`,
+      generate,
+      { labels: { Ok: 'Replace token', Cancel: 'Cancel' }, confirmButtonClass: 'md-btn-danger' }
+    )
+  }
+
+  onRemoveApiTokenClicked = e => {
+    e.preventDefault()
+    UIKit.modal.confirm(
+      `<h2>Remove your API token?</h2>
+      <p style="font-size: 15px;">Anything using it will stop working.</p>`,
+      () => {
+        axios
+          .post(`/api/v1/users/${this.props.sessionUser._id}/removeapikey`)
+          .then(() => {
+            this.apiToken = null
+            this.props.setSessionUser()
+            helpers.UI.showSnackbar('API token removed')
+          })
+          .catch(error => {
+            const errorText = error.response && error.response.data ? error.response.data.error : error.message
+            helpers.UI.showSnackbar(`Error: ${errorText}`, true)
+          })
+      },
+      { labels: { Ok: 'Remove token', Cancel: 'Cancel' }, confirmButtonClass: 'md-btn-danger' }
+    )
+  }
+
+  onCopyApiTokenClicked = e => {
+    e.preventDefault()
+    navigator.clipboard
+      .writeText(this.apiToken)
+      .then(() => helpers.UI.showSnackbar('API token copied'))
+      .catch(() => helpers.UI.showSnackbar('Could not copy: select the token and copy it manually', true))
   }
 
   render () {
@@ -607,6 +668,75 @@ class ProfileContainer extends React.Component {
                                 </div>
                               </div>
                             )}
+                          </div>
+                        }
+                      />
+                      <TruAccordion
+                        headerContent={'API Token'}
+                        content={
+                          <div>
+                            <p style={{ fontSize: '12px', fontWeight: 400 }}>
+                              An API token lets tools you trust, such as Claude Dot, read the Helpdesk as you. It
+                              carries your account&apos;s permissions, so treat it like a password: never share it or
+                              paste it into chats or emails.
+                            </p>
+                            {this.apiToken && (
+                              <div style={{ marginBottom: 15 }}>
+                                <div
+                                  className={'uk-alert uk-alert-warning'}
+                                  style={{ display: 'flex', alignItems: 'center' }}
+                                >
+                                  <i className='material-icons mr-10' style={{ opacity: 0.5 }}>
+                                    info
+                                  </i>
+                                  <p style={{ lineHeight: '18px' }}>
+                                    Copy your token now. For your security it won&apos;t be shown again.
+                                  </p>
+                                </div>
+                                <label>Your API token</label>
+                                <input
+                                  type='text'
+                                  className={'md-input'}
+                                  readOnly
+                                  value={this.apiToken}
+                                  onFocus={e => e.target.select()}
+                                  style={{ fontFamily: 'monospace' }}
+                                />
+                                <div style={{ marginTop: 10 }}>
+                                  <Button
+                                    text={'Copy token'}
+                                    style={'primary'}
+                                    small={true}
+                                    onClick={e => this.onCopyApiTokenClicked(e)}
+                                  />
+                                </div>
+                              </div>
+                            )}
+                            {!this.apiToken && (
+                              <h4 style={{ fontWeight: 500 }}>
+                                {this.props.sessionUser.hasAccessToken
+                                  ? 'You have an API token.'
+                                  : 'You don’t have an API token.'}
+                              </h4>
+                            )}
+                            <div>
+                              <Button
+                                text={this.props.sessionUser.hasAccessToken ? 'Replace token' : 'Generate token'}
+                                style={'primary'}
+                                small={true}
+                                waves={true}
+                                onClick={e => this.onGenerateApiTokenClicked(e)}
+                              />
+                              {this.props.sessionUser.hasAccessToken && (
+                                <Button
+                                  text={'Remove token'}
+                                  style={'danger'}
+                                  small={true}
+                                  extraClass={'ml-10'}
+                                  onClick={e => this.onRemoveApiTokenClicked(e)}
+                                />
+                              )}
+                            </div>
                           </div>
                         }
                       />

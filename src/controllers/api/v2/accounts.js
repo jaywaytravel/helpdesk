@@ -45,6 +45,8 @@ accountsApi.sessionUser = async (req, res) => {
     delete clonedUser.iOSDeviceTokens
     delete clonedUser.deleted
     clonedUser.groups = groups
+    // Only whether a token exists. The token itself is never sent back after it's generated.
+    clonedUser.hasAccessToken = !!(await User.exists({ _id: dbUser._id, accessToken: { $exists: true, $ne: null } }))
 
     return res.json(clonedUser)
   } catch (error) {

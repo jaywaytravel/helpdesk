@@ -1043,7 +1043,8 @@ apiUsers.removeApiKey = function (req, res) {
   const id = req.params.id
   if (_.isUndefined(id) || _.isNull(id)) return res.status(400).json({ error: 'Invalid Request' })
 
-  if (!req.user.isAdmin && req.user._id.toString() !== id) return res.status(401).json({ success: 'Unauthorized' })
+  if (!req.user.role.isAdmin && req.user._id.toString() !== id)
+    return res.status(401).json({ success: false, error: 'Unauthorized' })
 
   UserSchema.getUser(id, function (err, user) {
     if (err) return res.status(400).json({ error: 'Invalid Request', fullError: err })

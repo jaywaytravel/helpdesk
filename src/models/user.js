@@ -137,12 +137,12 @@ userSchema.methods.addAccessToken = function (callback) {
 
 userSchema.methods.removeAccessToken = function (callback) {
   var user = this
-  if (!user.accessToken) return callback()
-
-  user.accessToken = undefined
-  user.save(function (err) {
+  // accessToken is `select: false`, so it usually isn't loaded on this document and
+  // `user.save()` would silently keep it. Unset it in the database directly instead.
+  user.model(COLLECTION).updateOne({ _id: user._id }, { $unset: { accessToken: 1 } }, function (err) {
     if (err) return callback(err, null)
 
+    user.accessToken = undefined
     return callback()
   })
 }
